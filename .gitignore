@@ -1,0 +1,11 @@
+node_modules/
+*.log
+.DS_Store
+.env
+*.pyc
+__pycache__/
+.cache/
+multi-account-poc/
+build/
+dist/
+*.pack

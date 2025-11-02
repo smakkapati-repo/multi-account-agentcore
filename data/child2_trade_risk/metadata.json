@@ -1,0 +1,18 @@
+{
+  "dataset": "Child2-Demo Trade Risk Knowledge Base",
+  "description": "Country risk data and trade finance scenarios",
+  "countries": [
+    "China",
+    "Mexico",
+    "Germany",
+    "Vietnam",
+    "India"
+  ],
+  "sources": [
+    "World Bank API",
+    "Synthetic trade scenarios"
+  ],
+  "created_at": "2025-11-01T16:41:17.904164",
+  "purpose": "Country risk and trade exposure assessment",
+  "account": "Child2-Demo (058264155998)"
+}

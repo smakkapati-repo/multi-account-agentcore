@@ -1,0 +1,62 @@
+[
+  {
+    "scenario_id": "TF001",
+    "company": "Apple Inc",
+    "trade_type": "Import",
+    "countries": [
+      "China",
+      "Vietnam"
+    ],
+    "products": [
+      "Electronics components",
+      "Assembled devices"
+    ],
+    "annual_volume_usd": 50000000000,
+    "payment_terms": "Letter of Credit (90 days)",
+    "risks": [
+      "Supply chain concentration in China",
+      "Geopolitical tensions affecting trade",
+      "Currency fluctuation (CNY, VND)"
+    ]
+  },
+  {
+    "scenario_id": "TF002",
+    "company": "Tesla Inc",
+    "trade_type": "Import/Export",
+    "countries": [
+      "China",
+      "Germany"
+    ],
+    "products": [
+      "Battery components",
+      "Vehicles"
+    ],
+    "annual_volume_usd": 15000000000,
+    "payment_terms": "Open Account (60 days)",
+    "risks": [
+      "China market regulatory changes",
+      "EU emissions standards",
+      "Raw material price volatility"
+    ]
+  },
+  {
+    "scenario_id": "TF003",
+    "company": "Microsoft Corporation",
+    "trade_type": "Export",
+    "countries": [
+      "India",
+      "Mexico"
+    ],
+    "products": [
+      "Software licenses",
+      "Cloud services"
+    ],
+    "annual_volume_usd": 8000000000,
+    "payment_terms": "Wire Transfer (30 days)",
+    "risks": [
+      "Data localization requirements",
+      "Currency repatriation restrictions",
+      "IP protection concerns"
+    ]
+  }
+]
