@@ -1,0 +1,4 @@
+name: treasury-risk-agent
+description: Treasury & Risk LOB Agent with MCP
+model_id: anthropic.claude-sonnet-4-20250514-v1:0
+region: us-east-1

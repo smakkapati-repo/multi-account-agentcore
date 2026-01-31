@@ -3,9 +3,19 @@ from bedrock_agentcore.runtime import BedrockAgentCoreApp
 from strands import Agent, tool
 import boto3
 import json
-import requests
+from pathlib import Path
 
 app = BedrockAgentCoreApp()
+
+# Load LOB data for orchestration
+CORP_DATA_FILE = Path(__file__).parent.parent / "data" / "corporate_banking" / "customer_loans.json"
+RISK_DATA_FILE = Path(__file__).parent.parent / "data" / "treasury_risk" / "risk_models.json"
+
+with open(CORP_DATA_FILE) as f:
+    CORPORATE_DATA = json.load(f)
+
+with open(RISK_DATA_FILE) as f:
+    RISK_DATA = json.load(f)
 
 # AWS clients
 sts = boto3.client('sts', region_name='us-east-1')
@@ -13,83 +23,107 @@ sts = boto3.client('sts', region_name='us-east-1')
 # LOB account configuration
 CORPORATE_BANKING_ACCOUNT = "891377397197"
 TREASURY_RISK_ACCOUNT = "058264155998"
-CORPORATE_BANKING_ROLE_ARN = f"arn:aws:iam::{CORPORATE_BANKING_ACCOUNT}:role/CentralAccountAccessRole"
-TREASURY_RISK_ROLE_ARN = f"arn:aws:iam::{TREASURY_RISK_ACCOUNT}:role/CentralAccountAccessRole"
-
-# LOB bank mappings
-CORPORATE_BANKING_BANKS = {
-    "JPMorgan Chase": "0000019617",
-    "Bank of America": "0000070858",
-    "Citigroup": "0000831001"
-}
-
-TREASURY_RISK_BANKS = {
-    "Wells Fargo": "0000072971",
-    "U.S. Bancorp": "0000036104",
-    "Charles Schwab": "0000316709"
-}
-
-def get_fdic_data_for_bank(bank_name: str, cik: str) -> dict:
-    """Get real FDIC data for a specific bank"""
-    try:
-        # Use SEC EDGAR API to get real data
-        headers = {'User-Agent': 'BankIQ Analytics contact@bankiq.com'}
-        url = f"https://data.sec.gov/submissions/CIK{cik}.json"
-        
-        response = requests.get(url, headers=headers, timeout=10)
-        if response.status_code == 200:
-            data = response.json()
-            return {
-                "bank": bank_name,
-                "cik": cik,
-                "name": data.get('name', bank_name),
-                "filings": len(data.get('filings', {}).get('recent', {}).get('form', [])),
-                "success": True
-            }
-    except Exception as e:
-        pass
-    
-    return {"bank": bank_name, "cik": cik, "success": False}
-
-def query_lob_banks(lob_name: str, banks_dict: dict, query: str) -> dict:
-    """Query real banking data for a LOB using FDIC/SEC APIs"""
-    results = []
-    for bank_name, cik in banks_dict.items():
-        bank_data = get_fdic_data_for_bank(bank_name, cik)
-        results.append(bank_data)
-    
-    return {
-        "success": True,
-        "lob": lob_name,
-        "query": query,
-        "banks": results,
-        "total_banks": len(results),
-        "data_source": "SEC EDGAR API (real data)"
-    }
 
 @tool
-def query_corporate_banking(query: str) -> str:
+def query_corporate_banking(query: str, bank_name: str = None, customer_name: str = None, industry: str = None) -> str:
     """Query Corporate Banking LOB for customer relationships and loan exposure.
     
     Use this tool when the user asks about:
     - Customer relationship data
     - Loan exposure and credit ratings
     - Specific banks: JPMorgan Chase, Bank of America, Citigroup
+    
+    Args:
+        query: Natural language query
+        bank_name: Optional bank filter
+        customer_name: Optional customer filter
+        industry: Optional industry filter
     """
-    result = query_lob_banks("Corporate Banking", CORPORATE_BANKING_BANKS, query)
-    return json.dumps(result, indent=2)
+    results = []
+    
+    for bank in CORPORATE_DATA["banks"]:
+        if bank_name and bank_name.lower() not in bank["bank_name"].lower():
+            continue
+            
+        for loan in bank["customer_loans"]:
+            if customer_name and customer_name.lower() not in loan["customer_name"].lower():
+                continue
+            if industry and industry.lower() not in loan["industry"].lower():
+                continue
+                
+            results.append({
+                "bank": bank["bank_name"],
+                "customer": loan["customer_name"],
+                "industry": loan["industry"],
+                "loan_amount_millions": loan["loan_amount_millions"],
+                "credit_rating": loan["credit_rating"],
+                "loan_type": loan["loan_type"],
+                "relationship_years": loan["relationship_years"]
+            })
+    
+    # Include aggregate data
+    aggregate = []
+    for bank in CORPORATE_DATA["banks"]:
+        if not bank_name or bank_name.lower() in bank["bank_name"].lower():
+            aggregate.append({
+                "bank": bank["bank_name"],
+                "total_ci_loans_billions": bank["total_ci_loans_billions"],
+                "total_customers": bank["total_customers"],
+                "total_exposure_millions": bank["total_exposure_millions"]
+            })
+    
+    return json.dumps({
+        "lob": "Corporate Banking",
+        "account_id": CORPORATE_BANKING_ACCOUNT,
+        "query": query,
+        "data_source": CORPORATE_DATA["data_source"],
+        "aggregate_data": aggregate,
+        "customer_loans": results,
+        "total_results": len(results)
+    }, indent=2)
 
 @tool
-def query_treasury_risk(query: str) -> str:
+def query_treasury_risk(query: str, bank_name: str = None, industry: str = None) -> str:
     """Query Treasury & Risk LOB for treasury positions and risk models.
     
     Use this tool when the user asks about:
     - Treasury positions and hedging
     - Risk models (PD, LGD, Expected Loss)
     - Specific banks: Wells Fargo, U.S. Bancorp, Charles Schwab
+    
+    Args:
+        query: Natural language query
+        bank_name: Optional bank filter
+        industry: Optional industry filter
     """
-    result = query_lob_banks("Treasury & Risk", TREASURY_RISK_BANKS, query)
-    return json.dumps(result, indent=2)
+    results = []
+    
+    for bank in RISK_DATA["banks"]:
+        if bank_name and bank_name.lower() not in bank["bank_name"].lower():
+            continue
+            
+        for model in bank["risk_models"]:
+            if industry and industry.lower() not in model["industry"].lower():
+                continue
+                
+            results.append({
+                "bank": bank["bank_name"],
+                "industry": model["industry"],
+                "probability_of_default_pct": model["probability_of_default_pct"],
+                "loss_given_default_pct": model["loss_given_default_pct"],
+                "expected_loss_pct": model["expected_loss_pct"],
+                "rating_equivalent": model["rating_equivalent"]
+            })
+    
+    return json.dumps({
+        "lob": "Treasury & Risk",
+        "account_id": TREASURY_RISK_ACCOUNT,
+        "query": query,
+        "data_source": RISK_DATA["data_source"],
+        "market_data": RISK_DATA["market_data"],
+        "risk_models": results,
+        "total_results": len(results)
+    }, indent=2)
 
 @tool
 def compare_lobs(metric: str) -> str:
@@ -103,21 +137,24 @@ def compare_lobs(metric: str) -> str:
     Args:
         metric: The metric to compare (e.g., "exposure", "risk", "performance")
     """
-    # Query both LOBs with real data
-    corp_result = query_lob_banks("Corporate Banking", CORPORATE_BANKING_BANKS, f"Get {metric} data")
-    risk_result = query_lob_banks("Treasury & Risk", TREASURY_RISK_BANKS, f"Get {metric} data")
-    
     comparison = {
         "metric": metric,
-        "corporate_banking": corp_result,
-        "treasury_risk": risk_result,
-        "architecture": "Hub-and-Spoke (Centralized)",
-        "accounts": {
-            "central": "164543933824",
-            "corporate_banking": CORPORATE_BANKING_ACCOUNT,
-            "treasury_risk": TREASURY_RISK_ACCOUNT
+        "corporate_banking": {
+            "account_id": CORPORATE_BANKING_ACCOUNT,
+            "total_banks": len(CORPORATE_DATA["banks"]),
+            "total_customers": sum(b["total_customers"] for b in CORPORATE_DATA["banks"]),
+            "total_exposure_millions": sum(b["total_exposure_millions"] for b in CORPORATE_DATA["banks"]),
+            "banks": [b["bank_name"] for b in CORPORATE_DATA["banks"]]
         },
-        "data_source": "SEC EDGAR API (real data)"
+        "treasury_risk": {
+            "account_id": TREASURY_RISK_ACCOUNT,
+            "total_banks": len(RISK_DATA["banks"]),
+            "risk_models_count": sum(len(b["risk_models"]) for b in RISK_DATA["banks"]),
+            "banks": [b["bank_name"] for b in RISK_DATA["banks"]],
+            "market_data": RISK_DATA["market_data"]
+        },
+        "architecture": "Hub-and-Spoke (Centralized Multi-Account)",
+        "central_account": "164543933824"
     }
     
     return json.dumps(comparison, indent=2)

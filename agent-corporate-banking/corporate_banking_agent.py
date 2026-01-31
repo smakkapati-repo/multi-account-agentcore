@@ -1,131 +1,130 @@
-"""East Region Banking Agent with MCP Server
-Exposes regional banking data via MCP protocol
+"""Corporate Banking LOB Agent with MCP Server
+Exposes customer relationships and loan exposure via MCP protocol
 """
 from bedrock_agentcore.runtime import BedrockAgentCoreApp
 from strands import Agent, tool
 import boto3
 import json
-import requests
+from pathlib import Path
 
 app = BedrockAgentCoreApp()
 
-# East Region Banks
-EAST_BANKS = {
-    "JPMorgan Chase": "0000019617",
-    "Bank of America": "0000070858",
-    "Citigroup": "0000831001",
-    "PNC Financial": "0000713676",
-    "TD Bank": "0000133058"
-}
+# Load hybrid data
+DATA_FILE = Path(__file__).parent.parent / "data" / "corporate_banking" / "customer_loans.json"
+with open(DATA_FILE) as f:
+    CORPORATE_DATA = json.load(f)
 
 s3 = boto3.client('s3')
 
 @tool
-def mcp_query_east_kb(query: str) -> str:
-    """MCP Tool: Query East Region Knowledge Base
+def query_customer_loans(bank_name: str = None, customer_name: str = None, industry: str = None) -> str:
+    """Query customer relationships and loan exposure.
     
-    This tool is exposed via MCP protocol for cross-account access.
-    Returns banking data for East region banks.
+    Args:
+        bank_name: Filter by bank (JPMorgan Chase, Bank of America, Citigroup)
+        customer_name: Filter by customer name
+        industry: Filter by industry
     """
     results = []
-    for bank_name, cik in EAST_BANKS.items():
-        try:
-            headers = {'User-Agent': 'BankIQ Analytics contact@bankiq.com'}
-            url = f"https://data.sec.gov/submissions/CIK{cik}.json"
-            response = requests.get(url, headers=headers, timeout=10)
+    
+    for bank in CORPORATE_DATA["banks"]:
+        if bank_name and bank_name.lower() not in bank["bank_name"].lower():
+            continue
             
-            if response.status_code == 200:
-                data = response.json()
-                results.append({
-                    "bank": bank_name,
-                    "cik": cik,
-                    "name": data.get('name', bank_name),
-                    "filings_count": len(data.get('filings', {}).get('recent', {}).get('form', []))
-                })
-        except:
-            pass
+        for loan in bank["customer_loans"]:
+            if customer_name and customer_name.lower() not in loan["customer_name"].lower():
+                continue
+            if industry and industry.lower() not in loan["industry"].lower():
+                continue
+                
+            results.append({
+                "bank": bank["bank_name"],
+                "customer": loan["customer_name"],
+                "industry": loan["industry"],
+                "loan_amount_millions": loan["loan_amount_millions"],
+                "credit_rating": loan["credit_rating"],
+                "loan_type": loan["loan_type"],
+                "relationship_years": loan["relationship_years"]
+            })
     
     return json.dumps({
-        "region": "East",
-        "query": query,
-        "banks": results,
-        "mcp_enabled": True,
-        "data_source": "SEC EDGAR API"
+        "lob": "Corporate Banking",
+        "account_id": CORPORATE_DATA["account_id"],
+        "data_source": CORPORATE_DATA["data_source"],
+        "results": results,
+        "total_results": len(results)
     }, indent=2)
 
 @tool
-def mcp_get_east_s3_document(document_key: str) -> str:
-    """MCP Tool: Get document from East Region S3
+def get_bank_aggregate_data(bank_name: str) -> str:
+    """Get aggregate loan portfolio data for a bank.
     
-    This tool is exposed via MCP protocol for cross-account access.
-    Retrieves banking documents from regional S3 bucket.
+    Args:
+        bank_name: Bank name (JPMorgan Chase, Bank of America, Citigroup)
     """
-    try:
-        bucket_name = "east-region-banking-891377397197"
-        response = s3.get_object(Bucket=bucket_name, Key=document_key)
-        content = response['Body'].read().decode('utf-8')
-        
-        return json.dumps({
-            "success": True,
-            "region": "East",
-            "document_key": document_key,
-            "content_preview": content[:500],
-            "mcp_enabled": True
-        }, indent=2)
-    except Exception as e:
-        return json.dumps({
-            "success": False,
-            "error": str(e),
-            "region": "East"
-        })
+    for bank in CORPORATE_DATA["banks"]:
+        if bank_name.lower() in bank["bank_name"].lower():
+            return json.dumps({
+                "bank_name": bank["bank_name"],
+                "total_ci_loans_billions": bank["total_ci_loans_billions"],
+                "data_source_aggregate": bank["data_source_aggregate"],
+                "total_customers": bank["total_customers"],
+                "total_exposure_millions": bank["total_exposure_millions"],
+                "customer_breakdown_available": True
+            }, indent=2)
+    
+    return json.dumps({"error": f"Bank {bank_name} not found"})
 
 @tool
-def mcp_list_east_documents() -> str:
-    """MCP Tool: List available documents in East Region S3
+def get_industry_exposure(industry: str) -> str:
+    """Get total loan exposure by industry across all banks.
     
-    This tool is exposed via MCP protocol for cross-account access.
+    Args:
+        industry: Industry name (Technology, Healthcare, Energy, etc.)
     """
-    try:
-        bucket_name = "east-region-banking-891377397197"
-        response = s3.list_objects_v2(Bucket=bucket_name, Prefix="documents/")
+    exposure_by_bank = {}
+    
+    for bank in CORPORATE_DATA["banks"]:
+        bank_exposure = 0
+        customers = []
         
-        documents = [obj['Key'] for obj in response.get('Contents', [])]
+        for loan in bank["customer_loans"]:
+            if industry.lower() in loan["industry"].lower():
+                bank_exposure += loan["loan_amount_millions"]
+                customers.append(loan["customer_name"])
         
-        return json.dumps({
-            "success": True,
-            "region": "East",
-            "documents": documents,
-            "count": len(documents),
-            "mcp_enabled": True
-        }, indent=2)
-    except Exception as e:
-        return json.dumps({
-            "success": False,
-            "error": str(e),
-            "region": "East"
-        })
+        if bank_exposure > 0:
+            exposure_by_bank[bank["bank_name"]] = {
+                "exposure_millions": bank_exposure,
+                "customers": customers
+            }
+    
+    return json.dumps({
+        "industry": industry,
+        "exposure_by_bank": exposure_by_bank,
+        "total_exposure_millions": sum(b["exposure_millions"] for b in exposure_by_bank.values())
+    }, indent=2)
 
 # Create agent with MCP tools
-agent = Agent(tools=[mcp_query_east_kb, mcp_get_east_s3_document, mcp_list_east_documents])
-agent.system_prompt = """You are the East Region Banking Agent.
+agent = Agent(tools=[query_customer_loans, get_bank_aggregate_data, get_industry_exposure])
+agent.system_prompt = """You are the Corporate Banking LOB Agent.
 
-You provide banking data for East region banks via MCP protocol.
-Your tools are exposed as MCP endpoints for cross-account access.
-
-East Region Banks:
+You provide customer relationship data and loan exposure for:
 - JPMorgan Chase
 - Bank of America
 - Citigroup
-- PNC Financial
-- TD Bank
 
-When responding, provide clear, concise information about East region banking data.
+Data Sources:
+- Real FDIC aggregate loan data (C&I loans in billions)
+- Synthetic customer breakdown (Fortune 500 companies)
+
+Your tools are exposed via MCP protocol for cross-account access from the central orchestrator.
 """
 
 @app.entrypoint
 async def invoke(payload):
     """AgentCore entrypoint with MCP support"""
-    user_message = payload.get("prompt", "Hello from East Region!")
+    user_message = payload.get("prompt", "Hello from Corporate Banking LOB!")
     stream = agent.stream_async(user_message)
     async for event in stream:
         yield event
