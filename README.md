@@ -28,6 +28,9 @@
 ## 🏗️ Architecture Patterns
 
 ### Single-Account (Decentralized)
+
+![Single Account Architecture](arch/bankiq_plus_agentcore_architecture.png)
+
 ```
 User → CloudFront → ALB → ECS Backend → AgentCore Agent (12 tools) → FDIC/SEC APIs
 ```
@@ -37,6 +40,9 @@ User → CloudFront → ALB → ECS Backend → AgentCore Agent (12 tools) → F
 - **Use Case**: Startups, demos, single-region
 
 ### Multi-Account (Centralized Hub-and-Spoke)
+
+![Multi-Account Architecture](arch/multi_account_architecture.png)
+
 ```
 User → CloudFront → ALB → ECS Backend → Orchestrator Agent
                                               ↓
