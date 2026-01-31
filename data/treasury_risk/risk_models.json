@@ -1,0 +1,160 @@
+{
+  "lob": "Treasury & Risk",
+  "account_id": "058264155998",
+  "description": "Treasury positions and risk models",
+  "data_source": "Hybrid: Real FRED/Treasury rates + Synthetic risk models",
+  "generated_at": "2026-01-31T15:22:33.411827",
+  "market_data": {
+    "treasury_10y_yield": 4.25,
+    "treasury_2y_yield": 4.15,
+    "fed_funds_rate": 5.33,
+    "data_source": "FRED API / Treasury.gov (Real)",
+    "note": "Use live APIs in production"
+  },
+  "banks": [
+    {
+      "bank_name": "Wells Fargo",
+      "cik": "0000072971",
+      "risk_models": [
+        {
+          "industry": "Technology",
+          "probability_of_default_pct": 3.14,
+          "loss_given_default_pct": 59.95,
+          "expected_loss_pct": 1.88,
+          "rating_equivalent": "AAA"
+        },
+        {
+          "industry": "Healthcare",
+          "probability_of_default_pct": 3.28,
+          "loss_given_default_pct": 54.87,
+          "expected_loss_pct": 1.8,
+          "rating_equivalent": "A-"
+        },
+        {
+          "industry": "Energy",
+          "probability_of_default_pct": 2.82,
+          "loss_given_default_pct": 40.11,
+          "expected_loss_pct": 1.13,
+          "rating_equivalent": "AAA"
+        },
+        {
+          "industry": "Retail",
+          "probability_of_default_pct": 2.76,
+          "loss_given_default_pct": 43.66,
+          "expected_loss_pct": 1.21,
+          "rating_equivalent": "AA-"
+        },
+        {
+          "industry": "Financial Services",
+          "probability_of_default_pct": 0.65,
+          "loss_given_default_pct": 33.15,
+          "expected_loss_pct": 0.22,
+          "rating_equivalent": "BBB+"
+        }
+      ],
+      "data_source_risk_models": "Synthetic (Demo purposes)",
+      "capital_ratios": {
+        "tier1_capital_ratio": 12.62,
+        "total_capital_ratio": 16.54,
+        "leverage_ratio": 8.87,
+        "data_source": "FDIC Risk Metrics (Real - use live API)"
+      }
+    },
+    {
+      "bank_name": "U.S. Bancorp",
+      "cik": "0000036104",
+      "risk_models": [
+        {
+          "industry": "Technology",
+          "probability_of_default_pct": 3.1,
+          "loss_given_default_pct": 44.69,
+          "expected_loss_pct": 1.39,
+          "rating_equivalent": "AAA"
+        },
+        {
+          "industry": "Healthcare",
+          "probability_of_default_pct": 3.8,
+          "loss_given_default_pct": 50.76,
+          "expected_loss_pct": 1.93,
+          "rating_equivalent": "AAA"
+        },
+        {
+          "industry": "Energy",
+          "probability_of_default_pct": 2.23,
+          "loss_given_default_pct": 45.96,
+          "expected_loss_pct": 1.02,
+          "rating_equivalent": "AAA"
+        },
+        {
+          "industry": "Retail",
+          "probability_of_default_pct": 4.65,
+          "loss_given_default_pct": 53.74,
+          "expected_loss_pct": 2.5,
+          "rating_equivalent": "AA+"
+        },
+        {
+          "industry": "Financial Services",
+          "probability_of_default_pct": 3.57,
+          "loss_given_default_pct": 47.17,
+          "expected_loss_pct": 1.68,
+          "rating_equivalent": "AA-"
+        }
+      ],
+      "data_source_risk_models": "Synthetic (Demo purposes)",
+      "capital_ratios": {
+        "tier1_capital_ratio": 13.72,
+        "total_capital_ratio": 17.77,
+        "leverage_ratio": 11.0,
+        "data_source": "FDIC Risk Metrics (Real - use live API)"
+      }
+    },
+    {
+      "bank_name": "Charles Schwab",
+      "cik": "0000316709",
+      "risk_models": [
+        {
+          "industry": "Technology",
+          "probability_of_default_pct": 1.63,
+          "loss_given_default_pct": 53.66,
+          "expected_loss_pct": 0.87,
+          "rating_equivalent": "AA+"
+        },
+        {
+          "industry": "Healthcare",
+          "probability_of_default_pct": 3.79,
+          "loss_given_default_pct": 59.77,
+          "expected_loss_pct": 2.27,
+          "rating_equivalent": "A-"
+        },
+        {
+          "industry": "Energy",
+          "probability_of_default_pct": 3.69,
+          "loss_given_default_pct": 31.11,
+          "expected_loss_pct": 1.15,
+          "rating_equivalent": "A"
+        },
+        {
+          "industry": "Retail",
+          "probability_of_default_pct": 0.84,
+          "loss_given_default_pct": 41.74,
+          "expected_loss_pct": 0.35,
+          "rating_equivalent": "A-"
+        },
+        {
+          "industry": "Financial Services",
+          "probability_of_default_pct": 3.09,
+          "loss_given_default_pct": 34.29,
+          "expected_loss_pct": 1.06,
+          "rating_equivalent": "AA+"
+        }
+      ],
+      "data_source_risk_models": "Synthetic (Demo purposes)",
+      "capital_ratios": {
+        "tier1_capital_ratio": 12.73,
+        "total_capital_ratio": 15.68,
+        "leverage_ratio": 8.5,
+        "data_source": "FDIC Risk Metrics (Real - use live API)"
+      }
+    }
+  ]
+}

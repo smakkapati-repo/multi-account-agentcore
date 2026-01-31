@@ -1,0 +1,222 @@
+{
+  "lob": "Corporate Banking",
+  "account_id": "891377397197",
+  "description": "Customer relationships and loan exposure",
+  "data_source": "Hybrid: Real FDIC aggregate + Synthetic customer breakdown",
+  "generated_at": "2026-01-31T15:22:33.411198",
+  "banks": [
+    {
+      "bank_name": "JPMorgan Chase",
+      "cik": "0000019617",
+      "total_ci_loans_billions": 350,
+      "data_source_aggregate": "FDIC Call Reports (Real)",
+      "customer_loans": [
+        {
+          "customer_name": "UnitedHealth Group",
+          "industry": "Healthcare",
+          "ticker": "UNH",
+          "loan_amount_millions": 27,
+          "credit_rating": "AA+",
+          "relationship_years": 18,
+          "loan_type": "Bridge Loan"
+        },
+        {
+          "customer_name": "Costco Wholesale",
+          "industry": "Retail",
+          "ticker": "COST",
+          "loan_amount_millions": 44,
+          "credit_rating": "AA-",
+          "relationship_years": 5,
+          "loan_type": "Bridge Loan"
+        },
+        {
+          "customer_name": "Home Depot",
+          "industry": "Retail",
+          "ticker": "HD",
+          "loan_amount_millions": 141,
+          "credit_rating": "BBB+",
+          "relationship_years": 22,
+          "loan_type": "Term Loan"
+        },
+        {
+          "customer_name": "Boeing Co",
+          "industry": "Aerospace",
+          "ticker": "BA",
+          "loan_amount_millions": 44,
+          "credit_rating": "AAA",
+          "relationship_years": 19,
+          "loan_type": "Bridge Loan"
+        },
+        {
+          "customer_name": "Alphabet Inc",
+          "industry": "Technology",
+          "ticker": "GOOGL",
+          "loan_amount_millions": 47,
+          "credit_rating": "AAA",
+          "relationship_years": 10,
+          "loan_type": "Term Loan"
+        },
+        {
+          "customer_name": "Johnson & Johnson",
+          "industry": "Healthcare",
+          "ticker": "JNJ",
+          "loan_amount_millions": 69,
+          "credit_rating": "AA-",
+          "relationship_years": 8,
+          "loan_type": "Term Loan"
+        },
+        {
+          "customer_name": "Pfizer Inc",
+          "industry": "Healthcare",
+          "ticker": "PFE",
+          "loan_amount_millions": 130,
+          "credit_rating": "BBB+",
+          "relationship_years": 21,
+          "loan_type": "Term Loan"
+        },
+        {
+          "customer_name": "Microsoft Corp",
+          "industry": "Technology",
+          "ticker": "MSFT",
+          "loan_amount_millions": 42,
+          "credit_rating": "AA-",
+          "relationship_years": 11,
+          "loan_type": "Bridge Loan"
+        }
+      ],
+      "data_source_customers": "Synthetic (Demo purposes)",
+      "total_customers": 8,
+      "total_exposure_millions": 544
+    },
+    {
+      "bank_name": "Bank of America",
+      "cik": "0000070858",
+      "total_ci_loans_billions": 280,
+      "data_source_aggregate": "FDIC Call Reports (Real)",
+      "customer_loans": [
+        {
+          "customer_name": "Exxon Mobil Corp",
+          "industry": "Energy",
+          "ticker": "XOM",
+          "loan_amount_millions": 131,
+          "credit_rating": "BBB",
+          "relationship_years": 5,
+          "loan_type": "Bridge Loan"
+        },
+        {
+          "customer_name": "Home Depot",
+          "industry": "Retail",
+          "ticker": "HD",
+          "loan_amount_millions": 48,
+          "credit_rating": "AAA",
+          "relationship_years": 9,
+          "loan_type": "Term Loan"
+        },
+        {
+          "customer_name": "Costco Wholesale",
+          "industry": "Retail",
+          "ticker": "COST",
+          "loan_amount_millions": 115,
+          "credit_rating": "A",
+          "relationship_years": 25,
+          "loan_type": "Term Loan"
+        },
+        {
+          "customer_name": "Coca-Cola Co",
+          "industry": "Consumer Goods",
+          "ticker": "KO",
+          "loan_amount_millions": 46,
+          "credit_rating": "BBB+",
+          "relationship_years": 19,
+          "loan_type": "Bridge Loan"
+        },
+        {
+          "customer_name": "Microsoft Corp",
+          "industry": "Technology",
+          "ticker": "MSFT",
+          "loan_amount_millions": 94,
+          "credit_rating": "A+",
+          "relationship_years": 9,
+          "loan_type": "Revolving Credit"
+        },
+        {
+          "customer_name": "Pfizer Inc",
+          "industry": "Healthcare",
+          "ticker": "PFE",
+          "loan_amount_millions": 51,
+          "credit_rating": "BBB-",
+          "relationship_years": 9,
+          "loan_type": "Bridge Loan"
+        },
+        {
+          "customer_name": "JPMorgan Chase",
+          "industry": "Financial Services",
+          "ticker": "JPM",
+          "loan_amount_millions": 28,
+          "credit_rating": "AA",
+          "relationship_years": 22,
+          "loan_type": "Term Loan"
+        }
+      ],
+      "data_source_customers": "Synthetic (Demo purposes)",
+      "total_customers": 7,
+      "total_exposure_millions": 513
+    },
+    {
+      "bank_name": "Citigroup",
+      "cik": "0000831001",
+      "total_ci_loans_billions": 180,
+      "data_source_aggregate": "FDIC Call Reports (Real)",
+      "customer_loans": [
+        {
+          "customer_name": "Microsoft Corp",
+          "industry": "Technology",
+          "ticker": "MSFT",
+          "loan_amount_millions": 45,
+          "credit_rating": "AA-",
+          "relationship_years": 7,
+          "loan_type": "Bridge Loan"
+        },
+        {
+          "customer_name": "Apple Inc",
+          "industry": "Technology",
+          "ticker": "AAPL",
+          "loan_amount_millions": 116,
+          "credit_rating": "BBB",
+          "relationship_years": 18,
+          "loan_type": "Term Loan"
+        },
+        {
+          "customer_name": "JPMorgan Chase",
+          "industry": "Financial Services",
+          "ticker": "JPM",
+          "loan_amount_millions": 86,
+          "credit_rating": "A+",
+          "relationship_years": 8,
+          "loan_type": "Bridge Loan"
+        },
+        {
+          "customer_name": "Pfizer Inc",
+          "industry": "Healthcare",
+          "ticker": "PFE",
+          "loan_amount_millions": 46,
+          "credit_rating": "AAA",
+          "relationship_years": 10,
+          "loan_type": "Term Loan"
+        },
+        {
+          "customer_name": "UnitedHealth Group",
+          "industry": "Healthcare",
+          "ticker": "UNH",
+          "loan_amount_millions": 107,
+          "credit_rating": "AAA",
+          "relationship_years": 3,
+          "loan_type": "Term Loan"
+        }
+      ],
+      "data_source_customers": "Synthetic (Demo purposes)",
+      "total_customers": 5,
+      "total_exposure_millions": 400
+    }
+  ]
+}

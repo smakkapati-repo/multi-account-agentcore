@@ -1,93 +1,110 @@
-# Open Source Credit Risk Data Sources
+# Credit Risk Data Sources: Hybrid Approach
 
-## Recommended Approach for Demo
+## Strategy: Real Public Data + Synthetic Customer Breakdown
 
-### East Region LOB (Customer Relationships + Loan Exposure)
-**Data Sources:**
-1. **FDIC API** - Already integrated, use for loan portfolio metrics
-2. **Kaggle Lending Club Dataset** - 2M+ loan records (open source)
-   - URL: https://www.kaggle.com/wordsforthewise/lending-club
-   - Contains: loan amounts, grades, interest rates, defaults
-3. **Synthetic Customer Data** - Generate JSON for corporate clients
+This demo uses a **hybrid approach** to demonstrate the multi-account architecture pattern:
+- **Real data** from public APIs where available (FDIC, FRED, Treasury.gov)
+- **Synthetic data** for confidential customer-level information
 
-**Sample Data:**
+## Corporate Banking LOB (Account: 891377397197)
+
+### Real Data Sources
+**FDIC Call Reports** - Aggregate commercial & industrial (C&I) loan portfolios
+- JPMorgan Chase: $350B in C&I loans
+- Bank of America: $280B in C&I loans  
+- Citigroup: $180B in C&I loans
+- API: https://banks.data.fdic.gov/docs/
+
+### Synthetic Data (Demo Purposes)
+**Customer-level loan breakdown** - Fortune 500 companies with loan allocations
+- Why synthetic? Customer-level loan exposure is confidential banking data
+- 20 corporate customers across 3 banks
+- Loan amounts: $10M - $150M
+- Credit ratings: AAA to BBB-
+
+**Sample:**
 ```json
 {
-  "customer_id": "CORP-12345",
-  "bank": "JPMorgan Chase",
-  "total_exposure": 50000000,
-  "loan_types": {
-    "term_loan": 30000000,
-    "revolving_credit": 20000000
-  },
-  "credit_rating": "BBB+",
-  "industry": "Manufacturing"
+  "customer_name": "Apple Inc",
+  "industry": "Technology",
+  "ticker": "AAPL",
+  "loan_amount_millions": 116,
+  "credit_rating": "BBB",
+  "relationship_years": 18,
+  "loan_type": "Term Loan"
 }
 ```
 
-### West Region LOB (Treasury + Risk Models)
-**Data Sources:**
-1. **FRED API** (Federal Reserve Economic Data)
-   - URL: https://fred.stlouisfed.org/docs/api/fred/
-   - Free API, no auth required
-   - Data: Interest rates, credit spreads, economic indicators
-2. **Treasury.gov API**
-   - URL: https://fiscaldata.treasury.gov/api-documentation/
-   - Free, open data
-   - Data: Treasury rates, yield curves
-3. **Synthetic Risk Models** - Generate PD/LGD/EL calculations
+**Data File:** `data/corporate_banking/customer_loans.json`
 
-**Sample Data:**
+## Treasury & Risk LOB (Account: 058264155998)
+
+### Real Data Sources
+
+**1. FRED API (Federal Reserve Economic Data)**
+- Treasury yields (2Y, 10Y)
+- Fed Funds Rate
+- Economic indicators
+- API: https://fred.stlouisfed.org/docs/api/
+- Free, no authentication required
+
+**2. Treasury.gov API**
+- Treasury securities data
+- Yield curve data
+- API: https://fiscaldata.treasury.gov/api-documentation/
+- Free, open data
+
+**3. FDIC Risk Metrics**
+- Tier 1 capital ratios
+- Total capital ratios
+- Leverage ratios
+- API: https://banks.data.fdic.gov/docs/
+
+### Synthetic Data (Demo Purposes)
+**Risk model outputs** - PD, LGD, Expected Loss by industry
+- Why synthetic? Bank-specific risk models are proprietary
+- Risk models for 5 industries per bank
+- Real market rates (use live APIs in production)
+
+**Sample:**
 ```json
 {
-  "customer_id": "CORP-12345",
-  "bank": "Wells Fargo",
-  "treasury_exposure": {
-    "interest_rate_swaps": 5000000,
-    "fx_hedges": 2000000
-  },
-  "risk_metrics": {
-    "probability_of_default": 0.025,
-    "loss_given_default": 0.45,
-    "expected_loss": 562500
-  }
+  "industry": "Technology",
+  "probability_of_default_pct": 3.14,
+  "loss_given_default_pct": 59.95,
+  "expected_loss_pct": 1.88,
+  "rating_equivalent": "AAA"
 }
 ```
 
-## Credit Risk Assessment Flow
+**Data File:** `data/treasury_risk/risk_models.json`
 
-**Query:** "Assess credit risk for CORP-12345"
+## Production: Commercial Data Providers
 
-**Step 1:** Orchestrator → East LOB
-- Get loan exposure: $50M
-- Get relationship data: BBB+ rated, Manufacturing
+For production deployments, replace synthetic data with commercial sources:
 
-**Step 2:** Orchestrator → West LOB  
-- Get treasury exposure: $7M
-- Get risk metrics: PD=2.5%, LGD=45%, EL=$562K
+| Data Type | Provider | Use Case |
+|-----------|----------|----------|
+| Corporate Credit Data | Moody's Analytics, S&P Global | Credit ratings, PD/LGD models |
+| Real-time Market Data | Bloomberg Terminal, Refinitiv | Treasury yields, CDS spreads |
+| Bank Risk Metrics | FDIC API (Real-time) | Capital ratios, NPL ratios |
+| Company Financials | SEC EDGAR API | 10-K/10-Q filings |
 
-**Step 3:** Aggregate Response
-- Total exposure: $57M
-- Expected loss: $562K (0.99% of exposure)
-- Recommendation: Approve with monitoring
+## Generating Data
 
-## Implementation Plan
+```bash
+# Generate hybrid synthetic + real data
+python3 data/generate_synthetic_data.py
 
-1. **Create synthetic datasets** (2-3 hours)
-   - East: 100 corporate customers with loan data
-   - West: Risk metrics for same 100 customers
+# Output:
+# ✅ data/corporate_banking/customer_loans.json
+# ✅ data/treasury_risk/risk_models.json
+```
 
-2. **Store in S3/Knowledge Bases** (1-2 hours)
-   - East account: customer_loans.json
-   - West account: risk_models.json
+## Why This Approach?
 
-3. **Update child agents** (2-3 hours)
-   - East: Add tools to query loan data
-   - West: Add tools to query risk data
-
-4. **Test end-to-end** (1-2 hours)
-   - Query orchestrator
-   - Verify cross-account data retrieval
-   - Validate aggregated response
-
-**Total: 6-10 hours to implement credit risk use case**
+1. **Demonstrates Architecture** - Shows multi-account pattern without paid subscriptions
+2. **Realistic Data** - Uses real aggregate data where available
+3. **Privacy Compliant** - No real customer data exposure
+4. **Production Ready** - Easy to swap synthetic with commercial APIs
+5. **Cost Effective** - No API keys needed for demo
