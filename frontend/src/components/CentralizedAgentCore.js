@@ -101,23 +101,9 @@ const CentralizedAgentCore = () => {
 
       <Card sx={{ mb: 3, boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}>
         <CardContent>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6" sx={{ fontWeight: 600, color: '#A020F0' }}>
-              🤖 Query Credit Risk Orchestrator
-            </Typography>
-          </Box>
-          
-          <Box sx={{ mb: 2, p: 2, backgroundColor: '#e3f2fd', borderRadius: 2, border: '1px solid #2196f3' }}>
-            <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#1976d2' }}>
-              🏗️ Architecture: Hub-and-Spoke with MCP (3 AWS Accounts)
-            </Typography>
-            <Typography variant="body2" sx={{ fontSize: '0.875rem', color: '#555' }}>
-              • <strong>Central Account (164543933824)</strong>: Orchestrator with MCP Client<br/>
-              • <strong>Corporate Banking LOB (891377397197)</strong>: Customer loans + MCP Server<br/>
-              • <strong>Treasury & Risk LOB (058264155998)</strong>: Risk models + MCP Server<br/>
-              • <strong>Cross-Account Access</strong>: IAM AssumeRole + MCP protocol
-            </Typography>
-          </Box>
+          <Typography variant="h6" sx={{ fontWeight: 600, color: '#A020F0', mb: 2 }}>
+            🤖 Query Credit Risk Orchestrator
+          </Typography>
           
           <Box sx={{ mb: 2, p: 2, backgroundColor: '#f8f9fa', borderRadius: 2 }}>
             <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>

@@ -100,7 +100,7 @@ function Home() {
         Key Features
       </Typography>
       
-      <Grid container spacing={2}>
+      <Grid container spacing={2} sx={{ mb: 3 }}>
         {features.map((feature, index) => (
           <Grid item xs={12} md={4} key={index}>
             <Card 
@@ -135,6 +135,50 @@ function Home() {
           </Grid>
         ))}
       </Grid>
+
+      {/* Architecture Section */}
+      <Box sx={{ mb: 3, p: 3, backgroundColor: '#e3f2fd', borderRadius: 2, border: '2px solid #2196f3' }}>
+        <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: '#1976d2', mb: 2 }}>
+          🏗️ Multi-Account Architecture
+        </Typography>
+        <Grid container spacing={2}>
+          <Grid item xs={12} md={4}>
+            <Box sx={{ p: 2, backgroundColor: 'white', borderRadius: 1 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1, color: '#A020F0' }}>
+                Central Orchestrator
+              </Typography>
+              <Typography variant="body2" sx={{ fontSize: '0.85rem', color: '#555' }}>
+                Coordinates credit risk queries across LOBs via MCP Client. No data storage - pure orchestration.
+              </Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Box sx={{ p: 2, backgroundColor: 'white', borderRadius: 1 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1, color: '#00a897' }}>
+                Corporate Banking LOB
+              </Typography>
+              <Typography variant="body2" sx={{ fontSize: '0.85rem', color: '#555' }}>
+                Customer loans & exposure data. MCP Server exposes tools for querying Fortune 500 relationships.
+              </Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Box sx={{ p: 2, backgroundColor: 'white', borderRadius: 1 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1, color: '#02c59b' }}>
+                Treasury & Risk LOB
+              </Typography>
+              <Typography variant="body2" sx={{ fontSize: '0.85rem', color: '#555' }}>
+                Risk models & treasury positions. MCP Server provides PD, LGD, Expected Loss calculations.
+              </Typography>
+            </Box>
+          </Grid>
+        </Grid>
+        <Typography variant="body2" sx={{ mt: 2, fontStyle: 'italic', color: '#555' }}>
+          • Cross-Account Access: Secure IAM AssumeRole + MCP protocol<br/>
+          • Data Isolation: Each LOB maintains full control over sensitive data<br/>
+          • No Data Duplication: Data stays in source accounts
+        </Typography>
+      </Box>
 
       {/* Technology Stack */}
       <Box sx={{ mt: 3, p: 2, backgroundColor: '#f8f9fa', borderRadius: 2 }}>
