@@ -1,32 +1,67 @@
-"""Centralized Hub-and-Spoke Orchestrator Agent for Corporate Banking"""
+"""Centralized Hub-and-Spoke Orchestrator Agent with MCP Client"""
 from bedrock_agentcore.runtime import BedrockAgentCoreApp
 from strands import Agent, tool
 import boto3
 import json
-from pathlib import Path
+import os
 
 app = BedrockAgentCoreApp()
 
-# Load LOB data for orchestration
-CORP_DATA_FILE = Path(__file__).parent.parent / "data" / "corporate_banking" / "customer_loans.json"
-RISK_DATA_FILE = Path(__file__).parent.parent / "data" / "treasury_risk" / "risk_models.json"
-
-with open(CORP_DATA_FILE) as f:
-    CORPORATE_DATA = json.load(f)
-
-with open(RISK_DATA_FILE) as f:
-    RISK_DATA = json.load(f)
-
 # AWS clients
 sts = boto3.client('sts', region_name='us-east-1')
+bedrock_agent_runtime = boto3.client('bedrock-agent-runtime', region_name='us-east-1')
 
 # LOB account configuration
 CORPORATE_BANKING_ACCOUNT = "891377397197"
 TREASURY_RISK_ACCOUNT = "058264155998"
+CORPORATE_BANKING_AGENT_ARN = os.getenv('CORPORATE_BANKING_AGENT_ARN', '')
+TREASURY_RISK_AGENT_ARN = os.getenv('TREASURY_RISK_AGENT_ARN', '')
+
+def assume_role_and_invoke_mcp(role_arn: str, agent_arn: str, tool_name: str, parameters: dict) -> dict:
+    """Assume role in LOB account and invoke MCP tool"""
+    try:
+        # Assume role in LOB account
+        assumed_role = sts.assume_role(
+            RoleArn=role_arn,
+            RoleSessionName='OrchestratorMCPClient'
+        )
+        
+        credentials = assumed_role['Credentials']
+        
+        # Create bedrock client with assumed credentials
+        lob_bedrock = boto3.client(
+            'bedrock-agent-runtime',
+            region_name='us-east-1',
+            aws_access_key_id=credentials['AccessKeyId'],
+            aws_secret_access_key=credentials['SecretAccessKey'],
+            aws_session_token=credentials['SessionToken']
+        )
+        
+        # Invoke MCP tool via Bedrock Agent Runtime
+        response = lob_bedrock.invoke_agent(
+            agentId=agent_arn.split('/')[-1],
+            agentAliasId='TSTALIASID',
+            sessionId='mcp-session',
+            inputText=json.dumps({
+                'tool': tool_name,
+                'parameters': parameters
+            })
+        )
+        
+        # Parse streaming response
+        result = ''
+        for event in response['completion']:
+            if 'chunk' in event:
+                result += event['chunk']['bytes'].decode('utf-8')
+        
+        return json.loads(result)
+    
+    except Exception as e:
+        return {'error': str(e), 'mcp_call_failed': True}
 
 @tool
 def query_corporate_banking(query: str, bank_name: str = None, customer_name: str = None, industry: str = None) -> str:
-    """Query Corporate Banking LOB for customer relationships and loan exposure.
+    """Query Corporate Banking LOB via MCP for customer relationships and loan exposure.
     
     Use this tool when the user asks about:
     - Customer relationship data
@@ -39,52 +74,34 @@ def query_corporate_banking(query: str, bank_name: str = None, customer_name: st
         customer_name: Optional customer filter
         industry: Optional industry filter
     """
-    results = []
+    if not CORPORATE_BANKING_AGENT_ARN:
+        return json.dumps({
+            'error': 'Corporate Banking Agent ARN not configured',
+            'note': 'Set CORPORATE_BANKING_AGENT_ARN environment variable'
+        })
     
-    for bank in CORPORATE_DATA["banks"]:
-        if bank_name and bank_name.lower() not in bank["bank_name"].lower():
-            continue
-            
-        for loan in bank["customer_loans"]:
-            if customer_name and customer_name.lower() not in loan["customer_name"].lower():
-                continue
-            if industry and industry.lower() not in loan["industry"].lower():
-                continue
-                
-            results.append({
-                "bank": bank["bank_name"],
-                "customer": loan["customer_name"],
-                "industry": loan["industry"],
-                "loan_amount_millions": loan["loan_amount_millions"],
-                "credit_rating": loan["credit_rating"],
-                "loan_type": loan["loan_type"],
-                "relationship_years": loan["relationship_years"]
-            })
+    role_arn = f"arn:aws:iam::{CORPORATE_BANKING_ACCOUNT}:role/CentralAccountAccessRole"
     
-    # Include aggregate data
-    aggregate = []
-    for bank in CORPORATE_DATA["banks"]:
-        if not bank_name or bank_name.lower() in bank["bank_name"].lower():
-            aggregate.append({
-                "bank": bank["bank_name"],
-                "total_ci_loans_billions": bank["total_ci_loans_billions"],
-                "total_customers": bank["total_customers"],
-                "total_exposure_millions": bank["total_exposure_millions"]
-            })
+    result = assume_role_and_invoke_mcp(
+        role_arn=role_arn,
+        agent_arn=CORPORATE_BANKING_AGENT_ARN,
+        tool_name='query_customer_loans',
+        parameters={
+            'bank_name': bank_name,
+            'customer_name': customer_name,
+            'industry': industry
+        }
+    )
     
-    return json.dumps({
-        "lob": "Corporate Banking",
-        "account_id": CORPORATE_BANKING_ACCOUNT,
-        "query": query,
-        "data_source": CORPORATE_DATA["data_source"],
-        "aggregate_data": aggregate,
-        "customer_loans": results,
-        "total_results": len(results)
-    }, indent=2)
+    result['mcp_enabled'] = True
+    result['cross_account'] = True
+    result['query'] = query
+    
+    return json.dumps(result, indent=2)
 
 @tool
 def query_treasury_risk(query: str, bank_name: str = None, industry: str = None) -> str:
-    """Query Treasury & Risk LOB for treasury positions and risk models.
+    """Query Treasury & Risk LOB via MCP for treasury positions and risk models.
     
     Use this tool when the user asks about:
     - Treasury positions and hedging
@@ -96,38 +113,33 @@ def query_treasury_risk(query: str, bank_name: str = None, industry: str = None)
         bank_name: Optional bank filter
         industry: Optional industry filter
     """
-    results = []
+    if not TREASURY_RISK_AGENT_ARN:
+        return json.dumps({
+            'error': 'Treasury & Risk Agent ARN not configured',
+            'note': 'Set TREASURY_RISK_AGENT_ARN environment variable'
+        })
     
-    for bank in RISK_DATA["banks"]:
-        if bank_name and bank_name.lower() not in bank["bank_name"].lower():
-            continue
-            
-        for model in bank["risk_models"]:
-            if industry and industry.lower() not in model["industry"].lower():
-                continue
-                
-            results.append({
-                "bank": bank["bank_name"],
-                "industry": model["industry"],
-                "probability_of_default_pct": model["probability_of_default_pct"],
-                "loss_given_default_pct": model["loss_given_default_pct"],
-                "expected_loss_pct": model["expected_loss_pct"],
-                "rating_equivalent": model["rating_equivalent"]
-            })
+    role_arn = f"arn:aws:iam::{TREASURY_RISK_ACCOUNT}:role/CentralAccountAccessRole"
     
-    return json.dumps({
-        "lob": "Treasury & Risk",
-        "account_id": TREASURY_RISK_ACCOUNT,
-        "query": query,
-        "data_source": RISK_DATA["data_source"],
-        "market_data": RISK_DATA["market_data"],
-        "risk_models": results,
-        "total_results": len(results)
-    }, indent=2)
+    result = assume_role_and_invoke_mcp(
+        role_arn=role_arn,
+        agent_arn=TREASURY_RISK_AGENT_ARN,
+        tool_name='query_risk_models',
+        parameters={
+            'bank_name': bank_name,
+            'industry': industry
+        }
+    )
+    
+    result['mcp_enabled'] = True
+    result['cross_account'] = True
+    result['query'] = query
+    
+    return json.dumps(result, indent=2)
 
 @tool
 def compare_lobs(metric: str) -> str:
-    """Compare Corporate Banking vs Treasury & Risk LOB data.
+    """Compare Corporate Banking vs Treasury & Risk LOB data via MCP.
     
     Use this tool when the user asks to:
     - Compare LOBs
@@ -137,24 +149,17 @@ def compare_lobs(metric: str) -> str:
     Args:
         metric: The metric to compare (e.g., "exposure", "risk", "performance")
     """
+    # Query both LOBs via MCP
+    corp_result = query_corporate_banking(f"Get {metric} data")
+    risk_result = query_treasury_risk(f"Get {metric} data")
+    
     comparison = {
         "metric": metric,
-        "corporate_banking": {
-            "account_id": CORPORATE_BANKING_ACCOUNT,
-            "total_banks": len(CORPORATE_DATA["banks"]),
-            "total_customers": sum(b["total_customers"] for b in CORPORATE_DATA["banks"]),
-            "total_exposure_millions": sum(b["total_exposure_millions"] for b in CORPORATE_DATA["banks"]),
-            "banks": [b["bank_name"] for b in CORPORATE_DATA["banks"]]
-        },
-        "treasury_risk": {
-            "account_id": TREASURY_RISK_ACCOUNT,
-            "total_banks": len(RISK_DATA["banks"]),
-            "risk_models_count": sum(len(b["risk_models"]) for b in RISK_DATA["banks"]),
-            "banks": [b["bank_name"] for b in RISK_DATA["banks"]],
-            "market_data": RISK_DATA["market_data"]
-        },
-        "architecture": "Hub-and-Spoke (Centralized Multi-Account)",
-        "central_account": "164543933824"
+        "corporate_banking": json.loads(corp_result),
+        "treasury_risk": json.loads(risk_result),
+        "architecture": "Hub-and-Spoke with MCP",
+        "central_account": "164543933824",
+        "mcp_enabled": True
     }
     
     return json.dumps(comparison, indent=2)

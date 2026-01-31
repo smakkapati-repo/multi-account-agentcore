@@ -1,0 +1,10 @@
+name: corporate-banking-agent
+description: Corporate Banking LOB Agent with MCP Server
+model_id: anthropic.claude-sonnet-4-20250514-v1:0
+region: us-east-1
+mcp_server:
+  enabled: true
+  tools:
+    - query_customer_loans
+    - get_bank_aggregate_data
+    - get_industry_exposure

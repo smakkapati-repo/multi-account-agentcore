@@ -1,4 +1,11 @@
 name: treasury-risk-agent
-description: Treasury & Risk LOB Agent with MCP
+description: Treasury & Risk LOB Agent with MCP Server
 model_id: anthropic.claude-sonnet-4-20250514-v1:0
 region: us-east-1
+mcp_server:
+  enabled: true
+  tools:
+    - query_risk_models
+    - get_market_data
+    - get_bank_capital_ratios
+    - calculate_expected_loss
