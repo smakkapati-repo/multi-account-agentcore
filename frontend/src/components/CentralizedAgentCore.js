@@ -23,11 +23,11 @@ const CentralizedAgentCore = () => {
   const [accessMode, setAccessMode] = useState('backend');
 
   const sampleQueries = [
-    "What is the banking performance in the East region?",
-    "Analyze West region banking metrics",
-    "Compare East vs West region ROA and assets",
-    "Which region has better loan quality?",
-    "Show me top banks in each region"
+    "Show me Technology loans from Corporate Banking",
+    "What are the risk models for Healthcare industry?",
+    "Compare Corporate Banking vs Treasury & Risk exposure",
+    "Get capital ratios for Wells Fargo",
+    "Calculate expected loss for $100M Healthcare loan"
   ];
 
   const handleSubmit = async (queryText = null) => {
@@ -93,10 +93,10 @@ const CentralizedAgentCore = () => {
         }}
       >
         <Typography variant="h4" sx={{ fontWeight: 600 }}>
-          Centralized Multi-Account AgentCore
+          Multi-Account Credit Risk Orchestrator
         </Typography>
         <Typography variant="body2" sx={{ opacity: 0.9, mt: 1 }}>
-          Hub-and-spoke architecture: Central agent orchestrates queries across East and West regional banking accounts
+          Hub-and-spoke architecture: Central orchestrator queries Corporate Banking and Treasury & Risk LOBs via MCP protocol
         </Typography>
       </Paper>
 
@@ -104,7 +104,7 @@ const CentralizedAgentCore = () => {
         <CardContent>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography variant="h6" sx={{ fontWeight: 600, color: '#A020F0' }}>
-              🤖 Query Multi-Region Orchestrator
+              🤖 Query Credit Risk Orchestrator
             </Typography>
             <ToggleButtonGroup
               value={accessMode}
@@ -123,13 +123,13 @@ const CentralizedAgentCore = () => {
           
           <Box sx={{ mb: 2, p: 2, backgroundColor: '#e3f2fd', borderRadius: 2, border: '1px solid #2196f3' }}>
             <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#1976d2' }}>
-              🏗️ Architecture: Hub-and-Spoke (3 AWS Accounts)
+              🏗️ Architecture: Hub-and-Spoke with MCP (3 AWS Accounts)
             </Typography>
             <Typography variant="body2" sx={{ fontSize: '0.875rem', color: '#555' }}>
-              • <strong>Central Account (164543933824)</strong>: Orchestrator agent (you are here)<br/>
-              • <strong>East Region (891377397197)</strong>: Regional banking data + agent<br/>
-              • <strong>West Region (058264155998)</strong>: Regional banking data + agent<br/>
-              • <strong>Cross-Account Access</strong>: IAM AssumeRole for secure data access
+              • <strong>Central Account (164543933824)</strong>: Orchestrator with MCP Client<br/>
+              • <strong>Corporate Banking LOB (891377397197)</strong>: Customer loans + MCP Server<br/>
+              • <strong>Treasury & Risk LOB (058264155998)</strong>: Risk models + MCP Server<br/>
+              • <strong>Cross-Account Access</strong>: IAM AssumeRole + MCP protocol
             </Typography>
           </Box>
           
@@ -163,7 +163,7 @@ const CentralizedAgentCore = () => {
             <TextField
               fullWidth
               variant="outlined"
-              placeholder="Ask about East region, West region, or compare both regions..."
+              placeholder="Ask about Corporate Banking loans, Treasury & Risk models, or compare LOBs..."
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSubmit()}

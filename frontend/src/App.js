@@ -3,7 +3,6 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { Box, Tabs, Tab, AppBar, Toolbar, Typography, Container, IconButton, CircularProgress } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-import AssessmentIcon from '@mui/icons-material/Assessment';
 import CloudQueueIcon from '@mui/icons-material/CloudQueue';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { Amplify } from 'aws-amplify';
@@ -11,7 +10,6 @@ import { fetchAuthSession, signOut, signInWithRedirect } from 'aws-amplify/auth'
 import { Hub } from 'aws-amplify/utils';
 import { cognitoConfig } from './config';
 import Home from './components/Home';
-import FinancialReports from './components/FinancialReports';
 import CentralizedAgentCore from './components/CentralizedAgentCore';
 import Login from './components/Login';
 
@@ -212,8 +210,7 @@ function App() {
             }}
           >
             <Tab icon={<AccountBalanceIcon />} label="Home" />
-            <Tab icon={<AssessmentIcon />} label="Decentralized AgentCore" />
-            <Tab icon={<CloudQueueIcon />} label="Centralized AgentCore" />
+            <Tab icon={<CloudQueueIcon />} label="Multi-Account Orchestrator" />
           </Tabs>
         </AppBar>
         
@@ -222,9 +219,6 @@ function App() {
             <Home />
           </TabPanel>
           <TabPanel value={tabValue} index={1}>
-            <FinancialReports />
-          </TabPanel>
-          <TabPanel value={tabValue} index={2}>
             <CentralizedAgentCore />
           </TabPanel>
         </Container>
