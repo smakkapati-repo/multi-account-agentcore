@@ -25,18 +25,43 @@
 - **Deploy Time**: 30-40 minutes
 - **Use Case**: Enterprises, data sovereignty, multi-region compliance
 
-## 🏗️ Architecture Overview
+## 🏗️ Architecture Patterns
 
-**Shared Components (Both Modes):**
-- **Frontend**: React app with Cognito authentication
-- **Backend**: Express.js with JWT verification
-- **Infrastructure**: CloudFront → ALB → ECS Fargate → AgentCore
+### Single-Account (Decentralized)
+```
+User → CloudFront → ALB → ECS Backend → AgentCore Agent (12 tools) → FDIC/SEC APIs
+```
+- **1 Account**: All resources in one place
+- **Direct Access**: Agent directly calls FDIC/SEC APIs
+- **Simple**: Easy to deploy and manage
+- **Use Case**: Startups, demos, single-region
 
-**What Changes Between Modes:**
-- **Single-Account**: Backend calls 1 agent with 12 tools
-- **Multi-Account**: Backend calls orchestrator → orchestrator calls child agents
+### Multi-Account (Centralized Hub-and-Spoke)
+```
+User → CloudFront → ALB → ECS Backend → Orchestrator Agent
+                                              ↓
+                        ┌─────────────────────┴─────────────────────┐
+                        ↓                                           ↓
+              East Child Agent (MCP)                    West Child Agent (MCP)
+              Account: 891377397197                     Account: 058264155998
+              Banks: JPM, BAC, C                        Banks: WFC, USB, SCHW
+```
+- **3 Accounts**: Central hub + 2 regional child accounts
+- **MCP Protocol**: Cross-account agent communication
+- **Data Sovereignty**: Each region owns its data
+- **Use Case**: Enterprises, multi-region, compliance
 
-![Architecture](arch/peer-bank-analytics.drawio.png)
+### Key Differences
+
+| Aspect | Single-Account | Multi-Account |
+|--------|---------------|---------------|
+| **Accounts** | 1 | 3 |
+| **Agents** | 1 (12 tools) | 3 (orchestrator + 2 regional) |
+| **Data** | Centralized | Distributed |
+| **Complexity** | Low | High |
+| **Cost** | Lower | Higher |
+| **Compliance** | Simple | Regional boundaries |
+| **Deploy Time** | 20-25 min | 30-40 min |
 
 ## 🚀 Why This Matters
 
@@ -93,13 +118,9 @@ Transforms raw FDIC/SEC data into conversational insights. Ask "Why is our ROA u
 
 ## 📚 Documentation
 
-Complete documentation is available in the **[docs/](docs/)** folder:
-
-- **[Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** - Step-by-step deployment instructions
-- **[CloudFormation Guide](docs/CLOUDFORMATION_GUIDE.md)** - Infrastructure details and scripts
-- **[Agent Development](docs/AGENT_DEVELOPMENT.md)** - Building and extending the AI agent
-- **[Gateway Guide](GATEWAY_GUIDE.md)** - AgentCore Gateway integration (Tab 3)
-- **[Architecture Comparison](ARCHITECTURE_COMPARISON.md)** - Decentralized vs Centralized patterns
+- **[Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** - Detailed deployment steps
+- **[CloudFormation Guide](docs/CLOUDFORMATION_GUIDE.md)** - Infrastructure templates
+- **[Agent Development](docs/AGENT_DEVELOPMENT.md)** - Building custom tools
 
 ## ✨ Platform Features
 
