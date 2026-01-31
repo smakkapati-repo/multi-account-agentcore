@@ -28,17 +28,7 @@ This pattern combines **Amazon Bedrock AgentCore** with **Model Context Protocol
 
 ## 🏗️ Architecture Overview
 
-### Single-Account (Baseline)
-
-![Single Account Architecture](arch/bankiq_plus_agentcore_architecture.png)
-
-**Use Case**: Single department, all data in one account
-- 1 AWS Account
-- 1 Agent with 12 tools
-- Direct data access
-- Simple deployment
-
-### Multi-Account (Enterprise Pattern)
+![Multi-Account Architecture](arch/bankiq_plus_agentcore_architecture.png)
 
 ```
 ┌───────────────────────────────────────────────────────────────┐
@@ -64,10 +54,9 @@ This pattern combines **Amazon Bedrock AgentCore** with **Model Context Protocol
 
 **Key Components:**
 1. **Central Account**: Orchestrator agent (no data storage)
-2. **Regional Accounts**: MCP-enabled agents with LOB-owned data
+2. **LOB Accounts**: MCP-enabled agents with LOB-owned data
 3. **Cross-Account Access**: IAM roles with least-privilege
 4. **MCP Protocol**: Standardized data access interface
-5. **Shared Infrastructure**: Single UI/Backend for both patterns
 
 ## 📊 Use Case: Commercial Banking Credit Risk Assessment
 
@@ -126,20 +115,6 @@ For production deployments, integrate with your enterprise's existing data provi
 
 ## 📊 Agent Tools
 
-**Single-Account Agent** (`backend/bank_iq_agent_v1.py`):
-1. `get_fdic_data` - Live FDIC banking metrics
-2. `search_fdic_bank` - Search banks by name
-3. `compare_banks` - Peer performance comparison
-4. `get_sec_filings` - SEC EDGAR 10-K/10-Q filings
-5. `generate_bank_report` - Comprehensive analysis
-6. `answer_banking_question` - General Q&A
-7. `search_banks` - Bank search (500+ banks)
-8. `upload_csv_to_s3` - Custom data upload
-9. `analyze_csv_peer_performance` - CSV analysis
-10. `analyze_and_upload_pdf` - PDF upload + analysis
-11. `analyze_uploaded_pdf` - PDF deep analysis
-12. `chat_with_documents` - Multi-turn document Q&A
-
 **Multi-Account Orchestrator** (`agent-orchestrator/orchestrator_agent.py`):
 - `query_corporate_banking` - Query customer relationships and loan exposure
 - `query_treasury_risk` - Query treasury positions and risk models
@@ -168,27 +143,16 @@ For production deployments, integrate with your enterprise's existing data provi
 ## 🚀 Quick Start
 
 ### Prerequisites
-- AWS Account with administrative access
-- AWS Bedrock access enabled
-- AWS CLI configured
+- 3 AWS Accounts with administrative access
+- AWS Bedrock access enabled in all accounts
+- AWS CLI configured with profiles: `default`, `child1`, `child2-demo`
 - Node.js 18+, Python 3.11+
 - AgentCore CLI: `pip install bedrock-agentcore-starter-toolkit`
 
-### Deploy Single-Account (Simple)
+### Deploy Multi-Account Pattern
 
 ```bash
 git clone https://github.com/smakkapati-repo/multi-account-agentcore.git
-cd multi-account-agentcore
-./cfn/scripts/deploy-all.sh
-```
-
-**Deploy Time**: ~20-25 minutes
-
-### Deploy Multi-Account (Enterprise)
-
-**Prerequisites**: 3 AWS accounts with CLI profiles configured
-
-```bash
 cd multi-account-agentcore
 ./deploy-multi-account.sh
 ```
