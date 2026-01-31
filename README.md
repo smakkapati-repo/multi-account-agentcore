@@ -161,14 +161,30 @@ cd multi-account-agentcore
 
 ## 💰 Cost Estimate
 
-Monthly costs (24/7 operation):
-- ECS Fargate: $15-20
+**Multi-Account Setup (3 AWS Accounts):**
+
+Monthly costs for 24/7 operation:
+
+**Central Account (Hub):**
+- ECS Fargate (Backend): $15-20
 - ALB: $16-20
 - CloudFront: $1-5
-- S3: $1-2
-- Bedrock: $10-30
+- S3 (Frontend): $1-2
+- Bedrock (Orchestrator Agent): $10-20
+- **Subtotal**: ~$43-67/month
 
-**Total**: ~$50-90/month
+**LOB Accounts (2 accounts):**
+- Bedrock (MCP Agents): $5-10 per account
+- S3 (Data Storage): $1-2 per account
+- IAM Roles: Free
+- **Subtotal**: ~$12-24/month (both accounts)
+
+**Total Estimated Cost**: ~$55-90/month
+
+**Cost Optimization:**
+- Stop ECS tasks when not in use: ~$20-30/month
+- Use Bedrock on-demand pricing (pay per request)
+- Delete after demo: $0
 
 ## 🧹 Cleanup
 
