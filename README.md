@@ -1,6 +1,8 @@
 # Centralized Amazon Bedrock AgentCore with Distributed MCP Data Sources
 **A Multi-Account Pattern for Enterprise AI**
 
+**Project Name:** LoanIQ - Distributed Credit Risk Platform
+
 **Authors:** Shashi Makkapati, Senthil Kamala Rathinam, Jacob Scheatzle
 
 > **Blog Post Demo**: This repository demonstrates a multi-account architecture pattern using **Amazon Bedrock AgentCore** and **Model Context Protocol (MCP)** to enable centralized AI agents to securely access distributed data sources across AWS accounts without data duplication or ownership transfer.

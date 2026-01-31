@@ -11,29 +11,29 @@ function Home() {
   const features = [
     {
       icon: <AnalyticsIcon sx={{ fontSize: 48, color: 'primary.main' }} />,
-      title: 'Natural Language Analytics',
-      description: 'Just ask questions - AI agent decides which tools to use. No complex forms or dropdowns.',
-      status: 'Simplified ✨'
+      title: 'Multi-Account Orchestration',
+      description: 'Central orchestrator queries Corporate Banking and Treasury & Risk LOBs via MCP protocol across AWS accounts.',
+      status: 'MCP-Enabled ✨'
     },
     {
       icon: <AssessmentIcon sx={{ fontSize: 48, color: 'primary.main' }} />,
-      title: 'Smart Tool Selection',
-      description: 'Agent automatically picks from 12 banking tools: FDIC data, peer comparison, SEC filings, reports, document analysis, and more',
+      title: 'Credit Risk Assessment',
+      description: 'Hybrid data: Real FDIC aggregate + synthetic customer loans. Real market rates + synthetic risk models (PD, LGD, Expected Loss).',
       status: 'AI-Powered'
     },
     {
       icon: <TrendingUpIcon sx={{ fontSize: 48, color: 'primary.main' }} />,
-      title: 'Production Ready',
-      description: 'ECS Fargate deployment with ALB - no timeouts, auto-scaling, and enterprise-grade reliability.',
+      title: 'Enterprise Architecture',
+      description: 'Hub-and-spoke pattern with distributed LOB data ownership, cross-account IAM roles, and AgentCore Gateway.',
       status: 'Cloud-Native'
     }
   ];
 
   const stats = [
-    { label: 'Banks Available', value: '500+', color: '#00778f' },
-    { label: 'Metrics Tracked', value: '6+', color: '#00a897' },
-    { label: 'Data Sources', value: '3', color: '#02c59b' },
-    { label: 'AI Tools', value: '12', color: '#A020F0' }
+    { label: 'AWS Accounts', value: '3', color: '#00778f' },
+    { label: 'LOB Agents', value: '2', color: '#00a897' },
+    { label: 'MCP Tools', value: '7', color: '#02c59b' },
+    { label: 'Fortune 500 Customers', value: '20', color: '#A020F0' }
   ];
 
   return (
@@ -52,10 +52,10 @@ function Home() {
         <Box textAlign="center" sx={{ maxWidth: '40%', mx: 'auto' }}>
           <AccountBalanceIcon sx={{ fontSize: 48, mb: 1 }} />
           <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 600, mb: 1 }}>
-            BankIQ+
+            LoanIQ
           </Typography>
           <Typography variant="h6" sx={{ opacity: 0.9, mb: 2 }}>
-            Simplified Banking Analytics - Just Ask Questions!
+            Distributed Credit Risk Platform - Multi-Account Intelligence
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
             <Chip 
@@ -142,7 +142,7 @@ function Home() {
           Technology Stack
         </Typography>
         <Grid container spacing={1} justifyContent="center">
-          {['AWS Bedrock AgentCore', 'Claude Sonnet 4.5', 'Strands Framework', 'Express.js', 'ECS Fargate', 'FDIC API', 'SEC EDGAR', 'React', 'Material-UI'].map((tech) => (
+          {['AWS Bedrock AgentCore', 'MCP Protocol', 'Claude Sonnet 4.5', 'Strands Framework', 'AgentCore Gateway', 'Cross-Account IAM', 'FDIC API', 'FRED API', 'React'].map((tech) => (
             <Grid item key={tech}>
               <Chip 
                 label={tech} 

@@ -176,7 +176,10 @@ function App() {
     );
   }
 
-  if (!isAuthenticated) {
+  // Skip auth for local development
+  const skipAuth = process.env.NODE_ENV === 'development';
+
+  if (!isAuthenticated && !skipAuth) {
     return (
       <ThemeProvider theme={theme}>
         <CssBaseline />
@@ -193,7 +196,7 @@ function App() {
           <Toolbar>
             <AccountBalanceIcon sx={{ mr: 2 }} />
             <Typography variant="h4" component="div" sx={{ flexGrow: 1, fontWeight: 600 }}>
-              BankIQ+
+              LoanIQ
             </Typography>
             <IconButton color="inherit" onClick={handleLogout} title="Logout">
               <LogoutIcon />
