@@ -1,86 +1,99 @@
-# AI Banking Analytics Platform
-**Powered by [Amazon Bedrock AgentCore](https://aws.amazon.com/bedrock/agentcore/)**
+# Centralized Amazon Bedrock AgentCore with Distributed MCP Data Sources
+**A Multi-Account Pattern for Enterprise AI**
 
-**Authors:** Shashi Makkapati, Senthil Kamala Rathinam, Karthik Tharmarajan
+**Authors:** Shashi Makkapati, Senthil Kamala Rathinam, Jacob Scheatzle
 
-> **Reference Implementation**: This project demonstrates **Amazon Bedrock AgentCore** (AWS's managed agent runtime) with two deployment patterns: **Single-Account** (simple) and **Multi-Account** (enterprise hub-and-spoke).
+> **Blog Post Demo**: This repository demonstrates a multi-account architecture pattern using **Amazon Bedrock AgentCore** and **Model Context Protocol (MCP)** to enable centralized AI agents to securely access distributed data sources across AWS accounts without data duplication or ownership transfer.
 
-## 🎯 What You Get
+## 🎯 The Enterprise Challenge
 
-**One Platform, Two Deployment Modes:**
+Enterprise organizations face a critical architectural challenge:
+- **Distributed Data Ownership**: Different LOBs control different datasets across separate AWS accounts
+- **Compliance Requirements**: Each LOB must retain full control over sensitive data
+- **Business Need**: AI assistants must provide unified insights across these boundaries
 
-### Mode 1: Single-Account (Decentralized)
-- **1 AWS Account** - Everything in one place
-- **1 Agent** - 12 banking tools (FDIC, SEC EDGAR, PDF analysis)
-- **1 Backend** - Express.js on ECS Fargate
-- **1 Frontend** - React + Material-UI on CloudFront
-- **Deploy Time**: 20-25 minutes
-- **Use Case**: Startups, demos, single-region operations
+**Traditional approaches fail:**
+- ❌ **Centralizing data** increases governance complexity and duplicates regulated data
+- ❌ **Point-to-point integrations** create tight coupling and operational overhead
+- ❌ **Neither approach** aligns with enterprise multi-account strategies
 
-### Mode 2: Multi-Account (Centralized Hub-and-Spoke)
-- **3 AWS Accounts** - Central hub + 2 regional child accounts
-- **1 Orchestrator Agent** - Routes queries to regional agents via MCP
-- **2 Child Agents** - East/West region banking data
-- **Same Backend & Frontend** - Shared infrastructure
-- **Deploy Time**: 30-40 minutes
-- **Use Case**: Enterprises, data sovereignty, multi-region compliance
+## 💡 The Solution
 
-## 🏗️ Architecture Patterns
+This pattern combines **Amazon Bedrock AgentCore** with **Model Context Protocol (MCP)** to:
+- ✅ Enable centralized AI agent to orchestrate queries across LOB-owned data sources
+- ✅ Preserve data isolation, security, and compliance boundaries
+- ✅ Eliminate data duplication and ownership transfer
+- ✅ Standardize access through MCP protocol
+- ✅ Enforce least-privilege cross-account IAM roles
 
-### Single-Account (Decentralized)
+## 🏗️ Architecture Overview
+
+### Single-Account (Baseline)
 
 ![Single Account Architecture](arch/bankiq_plus_agentcore_architecture.png)
 
-```
-User → CloudFront → ALB → ECS Backend → AgentCore Agent (12 tools) → FDIC/SEC APIs
-```
-- **1 Account**: All resources in one place
-- **Direct Access**: Agent directly calls FDIC/SEC APIs
-- **Simple**: Easy to deploy and manage
-- **Use Case**: Startups, demos, single-region
+**Use Case**: Single department, all data in one account
+- 1 AWS Account
+- 1 Agent with 12 tools
+- Direct data access
+- Simple deployment
 
-### Multi-Account (Centralized Hub-and-Spoke)
+### Multi-Account (Enterprise Pattern)
 
 ```
-User → CloudFront → ALB → ECS Backend → Orchestrator Agent
-                                              ↓
-                        ┌─────────────────────┴─────────────────────┐
-                        ↓                                           ↓
-              East Child Agent (MCP)                    West Child Agent (MCP)
-              Account: 891377397197                     Account: 058264155998
-              Banks: JPM, BAC, C                        Banks: WFC, USB, SCHW
+┌───────────────────────────────────────────────────────────────┐
+│  Central Account (Hub) - AgentCore Orchestrator             │
+│  • Centralized AI reasoning                                 │
+│  • No data storage                                          │
+│  • Cross-account IAM roles                                  │
+└────────────────────────┬──────────────────────────────────────┘
+                         │
+        ┌────────────────┴────────────────┐
+        │                                 │
+        ▼                                 ▼
+┌───────────────────┐            ┌───────────────────┐
+│ East Region LOB   │            │ West Region LOB   │
+│ Account: 891...97 │            │ Account: 058...98 │
+│                   │            │                   │
+│ • MCP-enabled     │            │ • MCP-enabled     │
+│ • Regional data   │            │ • Regional data   │
+│ • IAM controls    │            │ • IAM controls    │
+│ • Banks: JPM,BAC  │            │ • Banks: WFC,USB  │
+└───────────────────┘            └───────────────────┘
 ```
-- **3 Accounts**: Central hub + 2 regional child accounts
-- **MCP Protocol**: Cross-account agent communication
-- **Data Sovereignty**: Each region owns its data
-- **Use Case**: Enterprises, multi-region, compliance
 
-### Key Differences
+**Key Components:**
+1. **Central Account**: Orchestrator agent (no data storage)
+2. **Regional Accounts**: MCP-enabled agents with LOB-owned data
+3. **Cross-Account Access**: IAM roles with least-privilege
+4. **MCP Protocol**: Standardized data access interface
+5. **Shared Infrastructure**: Single UI/Backend for both patterns
 
-| Aspect | Single-Account | Multi-Account |
-|--------|---------------|---------------|
-| **Accounts** | 1 | 3 |
-| **Agents** | 1 (12 tools) | 3 (orchestrator + 2 regional) |
-| **Data** | Centralized | Distributed |
-| **Complexity** | Low | High |
-| **Cost** | Lower | Higher |
-| **Compliance** | Simple | Regional boundaries |
-| **Deploy Time** | 20-25 min | 30-40 min |
+## 📊 Use Case: Commercial Banking Credit Risk Assessment
 
-## 🚀 Why This Matters
+This demo implements a banking analytics platform where:
+- **Central Agent**: Orchestrates credit risk assessment queries
+- **East Region LOB**: Owns customer relationship data (JPMorgan, Bank of America, Citigroup)
+- **West Region LOB**: Owns treasury and risk data (Wells Fargo, U.S. Bank, Charles Schwab)
 
-### Amazon Bedrock AgentCore Benefits
-- ✅ **Managed Runtime** - No infrastructure to manage
-- ✅ **Built-in Memory** - Conversational context across sessions
-- ✅ **Tool Orchestration** - Claude Sonnet 4.5 auto-selects tools
-- ✅ **Streaming** - Real-time token streaming
-- ✅ **Scalability** - Serverless auto-scaling
+**Business Value:**
+- Evaluate credit risk across multiple LOBs without data centralization
+- Each LOB maintains full control over sensitive financial data
+- Real-time access to distributed data sources
+- Compliance with regulatory data segregation requirements
 
-### Banking Analytics Use Case
-Transforms raw FDIC/SEC data into conversational insights. Ask "Why is our ROA underperforming?" and get comprehensive analysis considering market conditions, peer performance, and regulatory environment.
+## 🔑 Key Benefits
 
+| Benefit | Description |
+|---------|-------------|
+| **Data Isolation** | Each LOB maintains complete control over sensitive data |
+| **Security** | Cross-account IAM roles provide secure, auditable access |
+| **Compliance** | Meets regulatory requirements for data segregation |
+| **Scalability** | Independent scaling per business unit |
+| **Governance** | Centralized orchestration with distributed ownership |
+| **No Duplication** | Data stays in source accounts, no replication needed |
 
-## 📊 Agent Tools (12 Banking Tools)
+## 📊 Agent Tools
 
 **Single-Account Agent** (`backend/bank_iq_agent_v1.py`):
 1. `get_fdic_data` - Live FDIC banking metrics
@@ -101,24 +114,18 @@ Transforms raw FDIC/SEC data into conversational insights. Ask "Why is our ROA u
 - `query_west_region` - Query West region banks
 - `compare_regions` - Cross-regional comparison
 
-**How It Works:**
-- User asks: "Compare JPMorgan and Bank of America ROA"
-- Claude Sonnet 4.5 selects: `compare_banks` tool
-- Agent fetches FDIC data, analyzes trends, returns insights
-
 ## 🛠️ Technology Stack
 
-### Core AI Platform (NEW AWS Services)
-- **[Amazon Bedrock AgentCore](https://aws.amazon.com/bedrock/agentcore/)** - Managed agent runtime with built-in memory and tool orchestration
-- **[Strands Framework](https://github.com/awslabs/agents-for-amazon-bedrock-sample-code)** - Python agent framework for defining tools and workflows
-- **[Claude Sonnet 4.5](https://www.anthropic.com/claude)** - Foundation model for natural language understanding and reasoning
+### Core AI Platform
+- **[Amazon Bedrock AgentCore](https://aws.amazon.com/bedrock/agentcore/)** - Managed agent runtime
+- **[Strands Framework](https://github.com/awslabs/agents-for-amazon-bedrock-sample-code)** - Python agent framework
+- **[Claude Sonnet 4.5](https://www.anthropic.com/claude)** - Foundation model
 
 ### Application Stack
-- **Authentication**: [AWS Cognito](https://docs.aws.amazon.com/cognito/) + [AWS Amplify v6](https://aws.amazon.com/amplify/) (OAuth 2.0 + JWT)
+- **Authentication**: [AWS Cognito](https://docs.aws.amazon.com/cognito/) + OAuth 2.0 + JWT
 - **Backend**: [Express.js](https://expressjs.com/) (Node.js) + Python agent
-- **Frontend**: [React](https://react.dev/) + [Material-UI](https://mui.com/) + AWS Amplify Auth
+- **Frontend**: [React](https://react.dev/) + [Material-UI](https://mui.com/)
 - **Infrastructure**: [ECS Fargate](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html), [ALB](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/), [CloudFront](https://docs.aws.amazon.com/cloudfront/), [S3](https://docs.aws.amazon.com/s3/)
-- **Security**: [VPC](https://docs.aws.amazon.com/vpc/) private subnets, JWT verification, [IAM roles](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html), [Security Groups](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-security-groups.html)
 
 ## 📚 Documentation
 
@@ -126,230 +133,35 @@ Transforms raw FDIC/SEC data into conversational insights. Ask "Why is our ROA u
 - **[CloudFormation Guide](docs/CLOUDFORMATION_GUIDE.md)** - Infrastructure templates
 - **[Agent Development](docs/AGENT_DEVELOPMENT.md)** - Building custom tools
 
-## ✨ Platform Features
-
-### 📊 Peer Bank Analytics
-- **500+ Banks**: Access entire SEC EDGAR database
-- **Live FDIC Data**: Real-time financial metrics and trends
-- **Custom CSV Upload**: Analyze your own peer data
-- **AI-Powered Comparison**: Automated tool selection by Claude
-
-### 📋 Financial Reports Analyzer
-- **SEC Filings**: 10-K and 10-Q analysis for any public bank
-- **Document Upload**: Analyze your own financial PDFs
-- **Conversational Memory**: Context-aware across queries
-- **AI Chat**: Interactive Q&A about uploaded documents
-
-### 🔧 Analysis Modes
-1. **Live FDIC**: Real-time banking metrics from FDIC Call Reports
-2. **SEC EDGAR**: Direct integration with SEC.gov APIs
-3. **Document Upload**: PDF analysis with metadata extraction
-4. **Chat Mode**: Conversational analysis with memory
-
-
-
-
-
-
-
-
-
-
-## 🚀 Deployment Guide
+## 🚀 Quick Start
 
 ### Prerequisites
-
-**Required:**
 - AWS Account with administrative access
-- AWS Bedrock access enabled (see setup below)
-- AWS CLI configured (`aws configure`)
-- Node.js 18+ (for frontend build)
-- Python 3.11+ (for AgentCore CLI)
+- AWS Bedrock access enabled
+- AWS CLI configured
+- Node.js 18+, Python 3.11+
 - AgentCore CLI: `pip install bedrock-agentcore-starter-toolkit`
 
-### Install Prerequisites
+### Deploy Single-Account (Simple)
 
-**Mac/Linux:**
-```bash
-# Install Homebrew (if not installed)
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-# Install required tools
-brew install awscli node python@3.11 git
-pip install bedrock-agentcore-starter-toolkit
-```
-
-**Windows (PowerShell as Administrator):**
-```powershell
-# Install Chocolatey + all tools
-Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-choco install python git awscli nodejs jq -y
-pip install bedrock-agentcore-starter-toolkit
-
-# Add Python Scripts to PATH permanently (for agentcore command)
-echo 'export PATH="$PATH:/d/Users/$USER/AppData/Roaming/Python/Python314/Scripts"' >> ~/.bashrc
-source ~/.bashrc
-```
-
-**Enable Bedrock Access:**
-1. Go to [AWS Bedrock Console](https://console.aws.amazon.com/bedrock/)
-2. Navigate to **Model Access** in the left sidebar
-3. Click **Request model access**
-4. Enable: **Anthropic Claude Sonnet 4.5**
-5. Wait for approval (usually instant)
-
-### Step-by-Step Deployment
-
-**Step 1: Clone Repository**
 ```bash
 git clone https://github.com/smakkapati-repo/multi-account-agentcore.git
-cd multi-account-agentcore
-```
-
-
-
-**Step 2: Configure AWS CLI**
-
-**Mac/Linux/Windows:**
-```bash
-aws configure
-# Enter your AWS Access Key ID
-# Enter your AWS Secret Access Key
-# Enter region: (choose your preferred region, e.g., us-east-1, us-west-2, eu-west-1)
-# Enter output format: json
-```
-
-**Step 3: Choose Your Deployment Mode**
-
-### Option A: Single-Account (Recommended for Getting Started)
-
-```bash
 cd multi-account-agentcore
 ./cfn/scripts/deploy-all.sh
 ```
 
-**What Gets Deployed:**
-- ✅ Cognito User Pool (authentication)
-- ✅ VPC + ALB + ECS Fargate (infrastructure)
-- ✅ Single agent with 12 banking tools
-- ✅ Express.js backend (proxies to agent)
-- ✅ React frontend on CloudFront
+**Deploy Time**: ~20-25 minutes
 
-### Option B: Multi-Account (Enterprise Hub-and-Spoke)
+### Deploy Multi-Account (Enterprise)
 
-**Prerequisites:**
-- 3 AWS accounts configured
-- AWS CLI profiles: `default`, `child1`, `child2-demo`
+**Prerequisites**: 3 AWS accounts with CLI profiles configured
 
 ```bash
 cd multi-account-agentcore
 ./deploy-multi-account.sh
 ```
 
-**What Gets Deployed:**
-- ✅ Infrastructure in all 3 accounts
-- ✅ MCP-enabled child agents (East/West)
-- ✅ Orchestrator agent in central account
-- ✅ Same backend/frontend (shared)
-
-**Deployment Progress:**
-- 🔵 **[0/4] Auth (Cognito)** (~2-3 minutes)
-  - Creates Cognito User Pool
-  - Configures OAuth 2.0 authentication
-  - Sets up Hosted UI
-
-- 🔵 **[1/4] Infrastructure** (~5-7 minutes)
-  - VPC with public/private subnets
-  - Application Load Balancer
-  - ECS cluster
-  - S3 buckets
-  - ECR repositories
-
-- 🔵 **[2/4] AgentCore Agent** (~5-7 minutes)
-  - Builds and deploys Python agent with 12 tools
-  - Adds S3 permissions automatically
-  - Creates conversational memory
-
-- 🔵 **[3/4] Backend** (~7-10 minutes)
-  - Creates CodeBuild project
-  - Uploads source to S3
-  - Builds Docker image via CodeBuild
-  - Pushes to ECR
-  - Deploys ECS service
-
-- 🔵 **[4/4] Frontend** (~2-3 minutes)
-  - Builds React app
-  - Uploads to S3
-  - Creates CloudFront distribution
-  - Updates Cognito callback URLs
-
-**Total Time**: ~20-25 minutes
-
-**Step 4: Access Your Application**
-
-After deployment completes, you'll see:
-```
-✅ DEPLOYMENT COMPLETE WITH COGNITO!
-🌐 Application URL: https://[your-cloudfront-url].cloudfront.net
-🔐 Login URL: https://bankiq-auth-[account-id].auth.us-east-1.amazoncognito.com
-```
-
-**Next Steps:**
-1. Visit the Application URL
-2. Click 'Sign In with AWS Cognito'
-3. Click 'Sign up' to create your account
-4. Verify your email and log in
-
-## 🔍 Verify Deployment
-
-**Check Health:**
-
-**Mac/Linux:**
-```bash
-# Get CloudFront URL
-CLOUDFRONT_URL=$(aws cloudfront list-distributions --query "DistributionList.Items[?contains(Origins.Items[0].DomainName, 'bankiq-frontend')].DomainName" --output text)
-
-# Test health endpoint
-curl https://$CLOUDFRONT_URL/api/health
-# Expected: {"status":"healthy","service":"BankIQ+ Backend"}
-```
-
-**Windows (PowerShell):**
-```powershell
-# Get CloudFront URL
-$CLOUDFRONT_URL = aws cloudfront list-distributions --query "DistributionList.Items[?contains(Origins.Items[0].DomainName, 'bankiq-frontend')].DomainName" --output text
-
-# Test health endpoint
-Invoke-WebRequest -Uri "https://$CLOUDFRONT_URL/api/health"
-```
-
-**View Logs (All Platforms):**
-```bash
-# ECS backend logs
-aws logs start-live-tail --log-group-identifiers /ecs/bankiq-backend
-
-# AgentCore logs
-agentcore status
-```
-
-## ⚡ Performance & Caching
-
-BankIQ+ uses **node-cache** for in-memory caching to dramatically improve performance:
-
-- **SEC Filings**: 2000ms → 1ms (24 hour cache)
-- **Bank Search**: 500ms → 1ms (7 day cache)
-- **FDIC Data**: 1500ms → 1ms (1 hour cache)
-
-**Cache Management:**
-```bash
-# View cache statistics
-curl http://localhost:3001/api/admin/cache-stats
-
-# Clear all caches
-curl -X POST http://localhost:3001/api/admin/clear-cache \
-  -H "Content-Type: application/json" \
-  -d '{"type": "all"}'
-```
+**Deploy Time**: ~30-40 minutes
 
 ## 💰 Cost Estimate
 
@@ -362,56 +174,12 @@ Monthly costs (24/7 operation):
 
 **Total**: ~$50-90/month
 
-
-
 ## 🧹 Cleanup
 
-To delete all resources:
-
-**Mac/Linux/Windows:**
 ```bash
-# IMPORTANT: Run from project root directory
 cd multi-account-agentcore
 ./cfn/scripts/cleanup.sh
 ```
-
-This will remove:
-- ✅ CloudFormation stacks (frontend, backend, infrastructure, auth)
-- ✅ Cognito User Pool and all users
-- ✅ S3 buckets (with contents)
-- ✅ ECR images and repositories
-- ✅ ECS cluster and services
-- ✅ CloudFront distribution
-- ✅ AgentCore agent
-- ✅ All associated resources
-
-**Time**: ~10-15 minutes
-
-## 📝 Monitoring
-
-**All Platforms:**
-```bash
-# View ECS logs
-aws logs tail /ecs/bankiq-backend --follow
-
-# View AgentCore logs (run from backend directory)
-cd backend && agentcore status
-```
-
-
-
-## 🆘 Troubleshooting
-
-**Issue**: CloudFront returns 502
-- Check ECS task health
-- Check ALB target health
-- View logs: `aws logs start-live-tail --log-group-identifiers /ecs/bankiq-backend`
-
-**Issue**: Agent not responding
-- Check AgentCore status: `cd backend && agentcore status`
-- Verify agent ARN in ECS task environment variables
-
-For detailed troubleshooting, see the [Deployment Guide](docs/DEPLOYMENT_GUIDE.md).
 
 ## 📄 License
 
