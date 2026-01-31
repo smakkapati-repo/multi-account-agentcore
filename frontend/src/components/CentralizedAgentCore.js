@@ -9,9 +9,7 @@ import {
   Alert,
   CircularProgress,
   Chip,
-  Paper,
-  ToggleButton,
-  ToggleButtonGroup
+  Paper
 } from '@mui/material';
 import { Send as SendIcon } from '@mui/icons-material';
 
@@ -20,7 +18,6 @@ const CentralizedAgentCore = () => {
   const [response, setResponse] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [accessMode, setAccessMode] = useState('backend');
 
   const sampleQueries = [
     "Show me Technology loans from Corporate Banking",
@@ -39,16 +36,18 @@ const CentralizedAgentCore = () => {
     setResponse('');
 
     try {
-      const endpoint = accessMode === 'gateway' 
-        ? process.env.REACT_APP_GATEWAY_URL || 'GATEWAY_URL_NOT_SET'
-        : 'http://localhost:3001/api/chat-centralized';
+      const gatewayUrl = process.env.REACT_APP_GATEWAY_URL;
       
-      const response = await fetch(endpoint, {
+      if (!gatewayUrl) {
+        throw new Error('Gateway URL not configured. Set REACT_APP_GATEWAY_URL environment variable.');
+      }
+      
+      const response = await fetch(gatewayUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message: query }),
+        body: JSON.stringify({ prompt: query }),
       });
 
       if (!response.ok) {
@@ -73,7 +72,7 @@ const CentralizedAgentCore = () => {
         throw new Error(data.error || 'Unknown error');
       }
     } catch (err) {
-      setError(`Network error: ${err.message}`);
+      setError(`Error: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -106,19 +105,6 @@ const CentralizedAgentCore = () => {
             <Typography variant="h6" sx={{ fontWeight: 600, color: '#A020F0' }}>
               🤖 Query Credit Risk Orchestrator
             </Typography>
-            <ToggleButtonGroup
-              value={accessMode}
-              exclusive
-              onChange={(e, newMode) => newMode && setAccessMode(newMode)}
-              size="small"
-            >
-              <ToggleButton value="backend" sx={{ textTransform: 'none' }}>
-                Backend Proxy
-              </ToggleButton>
-              <ToggleButton value="gateway" sx={{ textTransform: 'none' }}>
-                Gateway (Serverless)
-              </ToggleButton>
-            </ToggleButtonGroup>
           </Box>
           
           <Box sx={{ mb: 2, p: 2, backgroundColor: '#e3f2fd', borderRadius: 2, border: '1px solid #2196f3' }}>
