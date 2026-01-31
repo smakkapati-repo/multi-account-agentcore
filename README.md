@@ -41,8 +41,6 @@ User → CloudFront → ALB → ECS Backend → AgentCore Agent (12 tools) → F
 
 ### Multi-Account (Centralized Hub-and-Spoke)
 
-![Multi-Account Architecture](arch/multi_account_architecture.png)
-
 ```
 User → CloudFront → ALB → ECS Backend → Orchestrator Agent
                                               ↓
