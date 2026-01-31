@@ -82,6 +82,37 @@ This demo implements a banking analytics platform where:
 - Real-time access to distributed data sources
 - Compliance with regulatory data segregation requirements
 
+### Data Sources
+
+**Demo Implementation (This Repository):**
+This demo uses **synthetic corporate customer data** to illustrate the multi-account pattern without requiring paid subscriptions or exposing sensitive information. The synthetic data includes:
+- Fortune 500-style corporate profiles
+- Simulated loan exposure ($1M-$500M)
+- Credit ratings (AAA-CCC)
+- Industry classifications and risk metrics
+
+**Enterprise Production Options:**
+Enterprises have access to commercial-grade data providers for production implementations:
+
+| Provider | Data Type | Use Case |
+|----------|-----------|----------|
+| **[Moody's Analytics](https://www.moodysanalytics.com/)** | Credit ratings, risk models, financial data | Credit risk assessment, portfolio analysis |
+| **[S&P Global Market Intelligence](https://www.spglobal.com/marketintelligence/)** | Corporate financials, credit data, industry analytics | Due diligence, credit decisioning |
+| **[Bloomberg Terminal](https://www.bloomberg.com/professional/solution/bloomberg-terminal/)** | Real-time financial data, credit default swaps, market data | Trading, risk management, analytics |
+| **[Refinitiv (LSEG)](https://www.refinitiv.com/)** | Financial data, risk analytics, regulatory data | Compliance, risk assessment, trading |
+| **[Dun & Bradstreet](https://www.dnb.com/)** | Business credit reports, company profiles | Credit decisioning, supplier risk |
+| **[Experian Business](https://www.experian.com/business/)** | Commercial credit data, risk scores | Small business lending, credit monitoring |
+
+**Why Synthetic Data for This Demo:**
+- ✅ No subscription costs or API keys required
+- ✅ No exposure of real customer data
+- ✅ Demonstrates architecture pattern without data licensing concerns
+- ✅ Easy to customize for different industries
+- ✅ Reproducible across any AWS account
+
+**Production Recommendation:**
+For production deployments, integrate with your enterprise's existing data providers using the same MCP-based architecture pattern demonstrated here. The agent tools can be easily adapted to call commercial APIs instead of synthetic data sources.
+
 ## 🔑 Key Benefits
 
 | Benefit | Description |
@@ -132,6 +163,7 @@ This demo implements a banking analytics platform where:
 - **[Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** - Detailed deployment steps
 - **[CloudFormation Guide](docs/CLOUDFORMATION_GUIDE.md)** - Infrastructure templates
 - **[Agent Development](docs/AGENT_DEVELOPMENT.md)** - Building custom tools
+- **[Data Sources](docs/CREDIT_RISK_DATA_SOURCES.md)** - Synthetic vs. commercial data options
 
 ## 🚀 Quick Start
 
