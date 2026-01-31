@@ -29,10 +29,10 @@ def assume_role(role_arn: str, session_name: str = "MultiAccountAgent"):
 def assess_trade_finance_risk(company_name: str) -> str:
     """Comprehensive trade finance risk assessment combining financial and trade data."""
     try:
-        # Child1 Financial KB - Get real SEC data
-        role_arn1 = "arn:aws:iam::891377397197:role/CentralAccountAccessRole"
-        credentials1 = assume_role(role_arn1)
-        s3_child1 = boto3.client('s3', **credentials1)
+        # Corporate Banking LOB - Get real SEC data
+        role_arn_corporate = "arn:aws:iam::891377397197:role/CentralAccountAccessRole"
+        credentials_corporate = assume_role(role_arn_corporate)
+        s3_corporate = boto3.client('s3', **credentials_corporate)
         
         # Map company to ticker
         ticker_map = {
@@ -58,10 +58,10 @@ def assess_trade_finance_risk(company_name: str) -> str:
                 "HON": {"revenue": "$36B", "position": "industrial technology leader", "margins": "strong", "revenue_type": "recurring services", "operations": "global"}
             }.get(ticker, {})
         
-        # Child2 Trade Risk KB
-        role_arn2 = "arn:aws:iam::058264155998:role/CentralAccountAccessRole"
-        credentials2 = assume_role(role_arn2)
-        s3_child2 = boto3.client('s3', **credentials2)
+        # Treasury & Risk LOB
+        role_arn_treasury = "arn:aws:iam::058264155998:role/CentralAccountAccessRole"
+        credentials_treasury = assume_role(role_arn_treasury)
+        s3_treasury = boto3.client('s3', **credentials_treasury)
         
         country_map = {
             "Caterpillar": "CHN",
@@ -94,12 +94,12 @@ def assess_trade_finance_risk(company_name: str) -> str:
 
 @tool
 def query_country_risks(country: str) -> str:
-    """Query trade risks for a specific country from Child2 Trade Risk KB."""
+    """Query trade risks for a specific country from Treasury & Risk LOB."""
     try:
-        # Child2 Trade Risk KB  
-        role_arn2 = "arn:aws:iam::058264155998:role/CentralAccountAccessRole"
-        credentials2 = assume_role(role_arn2)
-        s3_child2 = boto3.client('s3', **credentials2)
+        # Treasury & Risk LOB
+        role_arn_treasury = "arn:aws:iam::058264155998:role/CentralAccountAccessRole"
+        credentials_treasury = assume_role(role_arn_treasury)
+        s3_treasury = boto3.client('s3', **credentials_treasury)
         
         # Map country names to codes
         country_codes = {
@@ -129,7 +129,7 @@ def query_country_risks(country: str) -> str:
             return json.dumps({
                 "success": True,
                 "country": country,
-                "child2_access": "SUCCESS - Real World Bank data accessed",
+                "treasury_risk_access": "SUCCESS - Real World Bank data accessed",
                 "profile": country_profiles[country_code],
                 "data_source": "World Bank API + Trade Risk Analysis"
             }, indent=2)
@@ -156,8 +156,8 @@ MANDATORY RESPONSE FORMAT - ZERO TOLERANCE FOR DEVIATIONS:
 - COUNT YOUR PARAGRAPHS AND SENTENCES BEFORE RESPONDING
 
 Data sources:
-- Child1: Caterpillar, Boeing, Deere & Company, 3M, Honeywell
-- Child2: China, Germany, Vietnam, Mexico, India
+- Corporate Banking LOB: Caterpillar, Boeing, Deere & Company, 3M, Honeywell
+- Treasury & Risk LOB: China, Germany, Vietnam, Mexico, India
 
 EXAMPLE OF CORRECT FORMAT:
 

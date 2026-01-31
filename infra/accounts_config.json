@@ -8,26 +8,26 @@
   },
   "children": [
     {
-      "id": "east_region",
+      "id": "corporate_banking",
       "account_id": "891377397197",
       "profile": "child1",
-      "name": "East Region Banking",
-      "description": "East region banks - SEC filings and financial data",
-      "s3_bucket_prefix": "east-region-banking",
+      "name": "Corporate Banking LOB",
+      "description": "Corporate customer relationships and loan exposure (JPMorgan, Bank of America, Citigroup)",
+      "s3_bucket_prefix": "corporate-banking",
       "iam_role_name": "CentralAccountAccessRole",
-      "opensearch_collection_name": "east-region-kb",
-      "data_directory": "data/east_region"
+      "opensearch_collection_name": "corporate-banking-kb",
+      "data_directory": "data/corporate_banking"
     },
     {
-      "id": "west_region",
+      "id": "treasury_risk",
       "account_id": "058264155998",
       "profile": "child2-demo",
-      "name": "West Region Banking",
-      "description": "West region banks - SEC filings and financial data",
-      "s3_bucket_prefix": "west-region-banking",
+      "name": "Treasury & Risk LOB",
+      "description": "Treasury positions and risk models (Wells Fargo, U.S. Bank, Charles Schwab)",
+      "s3_bucket_prefix": "treasury-risk",
       "iam_role_name": "CentralAccountAccessRole",
-      "opensearch_collection_name": "west-region-kb",
-      "data_directory": "data/west_region"
+      "opensearch_collection_name": "treasury-risk-kb",
+      "data_directory": "data/treasury_risk"
     }
   ]
 }

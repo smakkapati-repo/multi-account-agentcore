@@ -278,10 +278,10 @@ def setup_child_account(config, child_id):
 def main():
     if len(sys.argv) < 2:
         print("Usage:")
-        print("  python setup_accounts.py central          # Setup central account")
-        print("  python setup_accounts.py child1           # Setup child1 account")
-        print("  python setup_accounts.py child2           # Setup child2 account")
-        print("  python setup_accounts.py all              # Setup all accounts")
+        print("  python setup_accounts.py central              # Setup central account")
+        print("  python setup_accounts.py corporate_banking    # Setup Corporate Banking LOB")
+        print("  python setup_accounts.py treasury_risk        # Setup Treasury & Risk LOB")
+        print("  python setup_accounts.py all                  # Setup all accounts")
         sys.exit(1)
     
     config = load_accounts_config()
@@ -294,11 +294,9 @@ def main():
         for child in config['children']:
             print("\n")
             setup_child_account(config, child['id'])
-    elif target.startswith("child"):
-        setup_child_account(config, target)
     else:
-        print(f"❌ Unknown target: {target}")
-        sys.exit(1)
+        # Try to find matching child account by ID
+        setup_child_account(config, target)
 
 if __name__ == "__main__":
     main()
