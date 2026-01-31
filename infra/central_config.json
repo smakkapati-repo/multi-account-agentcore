@@ -1,8 +1,0 @@
-{
-  "account_id": "164543933824",
-  "profile": "default",
-  "agentcore_role_arn": "arn:aws:iam::164543933824:role/AgentCoreMultiAccountRole",
-  "s3_bucket": "agentcore-multiaccountpoc-164543933824",
-  "child1_account_id": "891377397197",
-  "child2_account_id": "058264155998"
-}

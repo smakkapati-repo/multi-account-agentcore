@@ -4,13 +4,11 @@ from diagrams.aws.devtools import Codebuild
 from diagrams.aws.network import InternetGateway, ElasticLoadBalancing, VPC, CloudFront
 from diagrams.aws.storage import S3
 from diagrams.aws.ml import Bedrock
-from diagrams.aws.analytics import AmazonOpensearchService
 from diagrams.aws.management import Cloudwatch
-from diagrams.aws.security import IAM, Cognito, Shield
+from diagrams.aws.security import IAM, Cognito
 from diagrams.aws.general import User
 from diagrams.onprem.client import Users as ExternalUsers
 from diagrams.onprem.compute import Server
-from diagrams.custom import Custom
 
 # AWS-style professional configuration
 graph_attr = {
@@ -39,7 +37,7 @@ edge_attr = {
 }
 
 with Diagram(
-    "BankIQ+ Production Architecture - CloudFront + ECS + AgentCore + Compliance",
+    "BankIQ+ Production Architecture - CloudFront + ECS + AgentCore",
     show=False,
     direction="LR",
     graph_attr=graph_attr,
@@ -74,23 +72,16 @@ with Diagram(
             
             # Private Subnets
             with Cluster("Private Subnets - ECS Fargate", graph_attr={"bgcolor": "white", "style": "rounded"}):
-                ecs_backend = Fargate("Backend Container\nNode.js Express\n16 AI Tools\nJWT Verification")
+                ecs_backend = Fargate("Backend Container\nNode.js Express\n12 AI Tools\nJWT Verification")
             
             # Data Services
             with Cluster("Storage", graph_attr={"bgcolor": "white", "style": "rounded"}):
                 s3_docs = S3("S3 Bucket\nUploaded Documents")
         
         # AgentCore Runtime
-        with Cluster("Bedrock AgentCore + RAG", graph_attr={"bgcolor": "white", "style": "rounded"}):
-            guardrails = Shield("Bedrock Guardrails\nContent Filtering\nTopic Blocking\nPII Protection")
-            agentcore = Bedrock("AgentCore Runtime\nManaged Agent\nMemory + Orchestration")
-            strands_agent = Custom("Strands Agent\n18 Tools (Pydantic)\nFDIC/SEC/RAG/S3", "strands_framework.png")
-            claude = Bedrock("Claude Sonnet 4.5\n200K Context\nTool Selection")
-            opensearch = AmazonOpensearchService("OpenSearch Serverless\nVector Store\nRAG Knowledge Base")
-            
-            guardrails >> agentcore
-            agentcore >> Edge(label="Orchestrate", color="#E91E63") >> strands_agent
-            strands_agent >> Edge(label="LLM Reasoning", color="#E91E63") >> claude
+        with Cluster("Bedrock AgentCore", graph_attr={"bgcolor": "white", "style": "rounded"}):
+            agentcore = Bedrock("AgentCore Runtime\nbank_iq_agent_v1\n12 Tools + Memory")
+            claude = Bedrock("Claude Sonnet 4.5\nConversational AI")
             
         # CI/CD Pipeline
         with Cluster("CI/CD Pipeline", graph_attr={"bgcolor": "white", "style": "rounded"}):
@@ -106,10 +97,10 @@ with Diagram(
     
     # Step 1: User Authentication
     users >> Edge(label="1a. Login/Signup", color="#FF9900", style="bold") >> cognito
-    cognito >> Edge(taillabel="1b. JWT Token", color="#FF9900", style="dashed", minlen="1") >> users
+    cognito >> Edge(label="1b. JWT Token", color="#FF9900", style="dashed") >> users
     
     # Step 2: User to CloudFront
-    users >> Edge(headlabel="2. HTTPS Request\n+ JWT Token", color="#FF9900", style="bold") >> cloudfront
+    users >> Edge(label="2. HTTPS Request\n+ JWT Token", color="#FF9900", style="bold") >> cloudfront
     
     # Step 3: CloudFront to S3 (static files)
     cloudfront >> Edge(label="3a. Static Files\n(/, /static/*)", color="#4CAF50") >> s3_frontend
@@ -124,11 +115,8 @@ with Diagram(
     # Step 5: Backend to AgentCore
     ecs_backend >> Edge(label="5. Invoke Agent", color="#FF5722", style="bold") >> agentcore
     
-    # Step 6: Backend to Guardrails
-    ecs_backend >> Edge(label="6a. Content Check", color="#FF5722", style="dashed") >> guardrails
-    
-    # Step 7: Strands Agent to OpenSearch (RAG)
-    strands_agent >> Edge(label="RAG Query\nVector Search", color="#E91E63", style="dashed") >> opensearch
+    # Step 7: AgentCore to Claude
+    agentcore >> Edge(label="6. AI Analysis", color="#E91E63") >> claude
     
     # Step 8: Document Storage
     ecs_backend >> Edge(label="7. Upload Docs", color="#FF9800") >> s3_docs

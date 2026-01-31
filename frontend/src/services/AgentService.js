@@ -2,25 +2,6 @@
  * AgentCore Service - Handles communication with AgentCore backend
  * Updated to use async jobs for reliability (no 30s timeout)
  */
-
-// Helper function to safely parse JSON responses
-async function safeJsonParse(response) {
-  const contentType = response.headers.get('content-type');
-  
-  if (!contentType || !contentType.includes('application/json')) {
-    const text = await response.text();
-    console.error('Server returned non-JSON response:', text.substring(0, 200));
-    throw new Error(`Server error: Expected JSON but got ${contentType || 'unknown content type'}`);
-  }
-  
-  try {
-    return await response.json();
-  } catch (e) {
-    console.error('Failed to parse JSON:', e);
-    throw new Error('Invalid JSON response from server');
-  }
-}
-
 class AgentService {
   constructor() {
     this.baseURL = process.env.REACT_APP_API_GATEWAY_URL || window.location.origin;
@@ -34,7 +15,7 @@ class AgentService {
   async connectAgent() {
     try {
       const response = await fetch(`${this.baseURL}/api/agent-status`);
-      const status = await safeJsonParse(response);
+      const status = await response.json();
       
       if (status.status === 'connected') {
         this.connected = true;
@@ -74,23 +55,23 @@ class AgentService {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          inputText: `Answer this banking question: "${question}" about ${bankName || 'general banking'}`,
+          inputText: `Use the answer_banking_question tool to answer: "${question}" about ${bankName || 'general banking'}`,
           jobType: 'chat'
         })
       });
       
-      const job = await safeJsonParse(jobResponse);
+      const job = await jobResponse.json();
       
       // Poll for completion
       for (let i = 0; i < 60; i++) {
         await new Promise(resolve => setTimeout(resolve, 2000));
         
         const statusResponse = await fetch(`${this.baseURL}/api/jobs/${job.jobId}`);
-        const status = await safeJsonParse(statusResponse);
+        const status = await statusResponse.json();
         
         if (status.status === 'completed' || status.status === 'failed') {
           const resultResponse = await fetch(`${this.baseURL}/api/jobs/${job.jobId}/result`);
-          const result = await safeJsonParse(resultResponse);
+          const result = await resultResponse.json();
           
           if (result.status === 'failed') {
             throw new Error(result.error || 'Chat processing failed');
@@ -124,7 +105,7 @@ class AgentService {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          inputText: `Generate a comprehensive financial analysis report for ${bankName} using available tools.`,
+          inputText: `Use the generate_bank_report tool to create a comprehensive financial analysis report for ${bankName}. Call generate_bank_report with bank_name: "${bankName}".`,
           jobType: 'full-report'
         })
       });
@@ -296,42 +277,6 @@ class AgentService {
   emit(event, data) {
     if (this.listeners.has(event)) {
       this.listeners.get(event).forEach(callback => callback(data));
-    }
-  }
-
-  // Simple message sending for compatibility
-  async sendMessage(message) {
-    try {
-      const response = await fetch(`${this.baseURL}/api/agent`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: message })
-      });
-      
-      if (!response.ok) {
-        // Try to get error message from response
-        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-        try {
-          const contentType = response.headers.get('content-type');
-          if (contentType && contentType.includes('application/json')) {
-            const errorData = await response.json();
-            errorMessage = errorData.error || errorData.message || errorMessage;
-          } else {
-            // HTML error page - don't try to parse as JSON
-            const text = await response.text();
-            console.error('Server returned HTML error:', text.substring(0, 200));
-          }
-        } catch (e) {
-          // Ignore parsing errors
-        }
-        throw new Error(errorMessage);
-      }
-      
-      const result = await safeJsonParse(response);
-      return result.output || result.response || result.message || 'No response';
-    } catch (error) {
-      console.error('Send message error:', error);
-      throw error;
     }
   }
 

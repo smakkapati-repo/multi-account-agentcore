@@ -1,5 +1,5 @@
 {
-  "name": "multi-account-poc-frontend",
+  "name": "peer-bank-analytics",
   "version": "1.0.0",
   "private": true,
   "dependencies": {
@@ -13,13 +13,11 @@
     "@mui/material": "^5.15.0",
     "aws-amplify": "^6.15.7",
     "axios": "^1.6.0",
-    "chart.js": "^4.4.0",
     "react": "^18.2.0",
-    "react-chartjs-2": "^5.2.0",
     "react-dom": "^18.2.0",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^6.8.0",
-    "react-scripts": "^5.0.1",
+    "react-scripts": "5.0.1",
     "recharts": "^2.8.0"
   },
   "scripts": {

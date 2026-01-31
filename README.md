@@ -1,110 +1,409 @@
-# Multi-Account AgentCore Demo
+# BankIQ+ - AI Banking Analytics Platform (**Powered by [Amazon Bedrock AgentCore](https://aws.amazon.com/bedrock/agentcore/)**) 
 
-## Business Use Case: Intelligent Credit Risk Assessment
 
-### The Banking Challenge
+**Authors:** Shashi Makkapati, Senthil Kamala Rathinam, Jacob Scheatzle
 
-Commercial banks face critical operational challenges when assessing credit risk due to fragmented customer data across multiple lines of business:
+> **Technology Showcase**: This project demonstrates the capabilities of **Amazon Bedrock AgentCore** (AWS's new managed agent runtime) and the **Strands framework** for building production-ready AI agents with tool orchestration, conversational memory, and enterprise-grade security.
 
-- **Incomplete Risk Assessment**: Credit officers miss 30% of customer relationships during loan decisions because data sits in separate business units
-- **Slow Turnaround**: Manual data gathering across departments takes 3-5 days, delaying loan approvals and frustrating customers  
-- **Hidden Concentration Risk**: Banks cannot calculate total exposure to a single customer in real-time, creating regulatory and financial risk
-- **Siloed Operations**: Each business unit operates independently, preventing holistic customer understanding
+## 🚀 Why This Project Matters
 
-### Business Impact
+### Amazon Bedrock AgentCore + Strands Framework
+This is a **reference implementation** showcasing:
+- **Amazon Bedrock AgentCore** - AWS's newly launched managed agent runtime (announced October 2025)
+- **Strands Framework** - Python-based agent orchestration with 12 custom tools
+- **Production Architecture** - CloudFront + ECS + Cognito + AgentCore (no API Gateway)
+- **Conversational Memory** - Multi-turn conversations with context retention
+- **Tool Orchestration** - Claude Sonnet 4.5 automatically selects from 12 specialized tools
+- **Enterprise Security** - JWT authentication, IAM roles, private subnets
 
-| Metric | Current State | Target State | Improvement |
-|--------|---------------|--------------|-------------|
-| **Assessment Time** | 2-3 days | 2-4 hours | 85% faster |
-| **Data Gathering** | 6-8 manual calls | Automated queries | 100% coverage |
-| **Senior Analyst Time** | 4-6 hours per $10M+ deal | 45 minutes review | 80% time savings |
-| **Cross-LOB Visibility** | Quarterly reports only | Real-time dashboard | Risk transparency |
+### Banking Analytics Use Case
+The advent of Generative AI has revolutionized how financial institutions process and interpret complex banking data. BankIQ+ represents a paradigm shift from traditional rule-based analytics to intelligent, context-aware financial analysis. By integrating Amazon Bedrock AgentCore with Claude Sonnet 4.5, real-time FDIC data, and SEC EDGAR filings, the platform doesn't just present numbers—it understands relationships between metrics, identifies emerging trends, and generates human-like insights.
 
-### Financial Benefits (Mid-size Regional Bank)
-- **$180K** annual savings (3 senior analysts @ $120K, 50% time reduction)
-- **$450K** faster deal closure (15% improvement on $50M monthly originations)
-- **$200K** risk mitigation (early warning on 2-3 problem accounts annually)
-- **Total Annual Benefit: $830K** vs $150K implementation cost
+The AI agent can instantly correlate a bank's declining Net Interest Margin with industry-wide patterns, explain strategic implications of capital changes, or predict potential regulatory concerns based on CRE concentration trends. This GenAI-powered approach transforms raw regulatory data into conversational insights, enabling bank executives to ask natural language questions like "Why is our ROA underperforming compared to similar-sized banks?" and receive comprehensive, contextual analysis that considers market conditions, regulatory environment, and peer performance.
 
-## Our Solution: Multi-Account AgentCore Architecture
 
-### What We Built
+## 🏗️ AWS Architecture
 
-An intelligent assistant powered by Amazon Bedrock AgentCore that automatically gathers and synthesizes customer information from all business units in real-time, providing credit officers with a complete 360-degree view for faster, more informed lending decisions.
+![BankIQ+ AWS Architecture](arch/peer-bank-analytics.drawio.png)
 
-**Example Scenario**: A credit officer evaluates a $50M equipment loan for TechCorp Industries. Instead of spending days calling colleagues across departments, they submit one request. Within 30 minutes, they receive a comprehensive credit memo pulling together data from all 6 lines of business plus external sources.
 
-### Why Multi-Account Architecture?
+### Architecture Deep Dive
 
-- **Data Isolation**: Each LOB maintains complete control over their sensitive data
-- **Security**: Cross-account IAM roles provide secure, auditable access
-- **Compliance**: Meets regulatory requirements for data segregation
-- **Scalability**: Independent scaling per business unit
-- **Governance**: Centralized orchestration with distributed data ownership
+BankIQ+ follows a modern, cloud-native architecture built on AWS services with security-first design. User requests flow through [CloudFront](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Introduction.html) for global content delivery, routing static files from [S3](https://docs.aws.amazon.com/s3/) and API calls to the [Application Load Balancer](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/introduction.html). The ALB distributes traffic to containerized applications running on [Amazon ECS Fargate](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html), eliminating server management while providing automatic scaling.
 
-## Architecture
+The platform's intelligence comes from [Amazon Bedrock AgentCore](https://aws.amazon.com/bedrock/agentcore/), which orchestrates 12 specialized tools for banking analytics. The agent uses [Claude Sonnet 4.5](https://www.anthropic.com/claude) for natural language understanding and maintains conversational memory across sessions. External data integration includes FDIC APIs for real-time banking metrics and SEC EDGAR APIs for financial filings. Documents uploaded to S3 are analyzed using PyPDF2 for metadata extraction and Claude for comprehensive analysis.
 
-### Multi-Account Credit Risk Assessment Architecture
+Security is embedded throughout: [AWS Cognito](https://docs.aws.amazon.com/cognito/) provides enterprise-grade authentication with OAuth 2.0 and JWT tokens, Fargate containers run in private subnets with JWT verification, [IAM roles](https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html) provide fine-grained access control, and [CloudWatch](https://docs.aws.amazon.com/cloudwatch/) enables comprehensive monitoring. The architecture eliminates API Gateway's 30-second timeout limitation, supporting long-running queries up to 300 seconds. Infrastructure is deployed through [CloudFormation](https://docs.aws.amazon.com/cloudformation/) templates, ensuring consistent, repeatable deployments.
 
-![Multi-Account Architecture](arch/credit_risk_multi_account_architecture.png?t=1730548891)
+## 🛠️ Technology Stack
 
-### Architecture Components
+### Core AI Platform (NEW AWS Services)
+- **[Amazon Bedrock AgentCore](https://aws.amazon.com/bedrock/agentcore/)** - Managed agent runtime with built-in memory and tool orchestration
+- **[Strands Framework](https://github.com/awslabs/agents-for-amazon-bedrock-sample-code)** - Python agent framework for defining tools and workflows
+- **[Claude Sonnet 4.5](https://www.anthropic.com/claude)** - Foundation model for natural language understanding and reasoning
 
-**Central Account - Credit Hub**:
-- **Bedrock AgentCore**: Orchestration engine with conversation memory
-- **Strands Agent**: 11 specialized tools for cross-account and external data access
-- **Claude Sonnet 4.5**: Advanced reasoning and synthesis capabilities
-- **Cross-Account IAM**: Secure AssumeRole patterns to all LOB accounts
+### Application Stack
+- **Authentication**: [AWS Cognito](https://docs.aws.amazon.com/cognito/) + [AWS Amplify v6](https://aws.amazon.com/amplify/) (OAuth 2.0 + JWT)
+- **Backend**: [Express.js](https://expressjs.com/) (Node.js) + Python agent
+- **Frontend**: [React](https://react.dev/) + [Material-UI](https://mui.com/) + AWS Amplify Auth
+- **Infrastructure**: [ECS Fargate](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html), [ALB](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/), [CloudFront](https://docs.aws.amazon.com/cloudfront/), [S3](https://docs.aws.amazon.com/s3/)
+- **Security**: [VPC](https://docs.aws.amazon.com/vpc/) private subnets, JWT verification, [IAM roles](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html), [Security Groups](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-security-groups.html)
 
-**6 LOB Accounts** with MCP Entry Points:
-- **Corporate Banking MCP**: Loan documents, credit memos, payment history
-- **Treasury Services MCP**: FX positions, derivatives, cash management
-- **Investment Banking MCP**: M&A deals, capital markets, analyst ratings
-- **Trade Finance MCP**: Letters of credit, import/export financing
-- **Credit Risk MCP**: Internal ratings, risk scores, covenant compliance
-- **CRM MCP**: Customer relationships, meeting notes, ownership structure
+## 📚 Documentation
 
-**External Data Sources**:
-- Dun & Bradstreet credit reports
-- Moody's Analytics ratings
-- S&P Capital IQ financials
-- SEC EDGAR filings
-- News & sentiment APIs
+Complete documentation is available in the **[docs/](docs/)** folder:
 
-## Implementation Details
+- **[Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** - Step-by-step deployment instructions
+- **[CloudFormation Guide](docs/CLOUDFORMATION_GUIDE.md)** - Infrastructure details and scripts
+- **[Agent Development](docs/AGENT_DEVELOPMENT.md)** - Building and extending the AI agent
+- **[Gateway Guide](GATEWAY_GUIDE.md)** - AgentCore Gateway integration (Tab 3)
+- **[Architecture Comparison](ARCHITECTURE_COMPARISON.md)** - Decentralized vs Centralized patterns
 
-### Quick Start
+## ✨ Platform Features
 
+### 📊 Peer Bank Analytics
+- **500+ Banks**: Access entire SEC EDGAR database
+- **Live FDIC Data**: Real-time financial metrics and trends
+- **Custom CSV Upload**: Analyze your own peer data
+- **AI-Powered Comparison**: Automated tool selection by Claude
+
+### 📋 Financial Reports Analyzer
+- **SEC Filings**: 10-K and 10-Q analysis for any public bank
+- **Document Upload**: Analyze your own financial PDFs
+- **Conversational Memory**: Context-aware across queries
+- **AI Chat**: Interactive Q&A about uploaded documents
+
+### 🔧 Analysis Modes
+1. **Live FDIC**: Real-time banking metrics from FDIC Call Reports
+2. **SEC EDGAR**: Direct integration with SEC.gov APIs
+3. **Document Upload**: PDF analysis with metadata extraction
+4. **Chat Mode**: Conversational analysis with memory
+
+### 🏗️ Architecture Patterns (Tab 2 vs Tab 3)
+- **Tab 2 - Decentralized**: Single account, all data in one place, backend proxy
+- **Tab 3 - Centralized**: Hub-and-spoke (3 accounts), MCP-enabled agents, cross-account IAM
+- **Tab 3 - Gateway**: Serverless API access via API Gateway (optional)
+
+
+## 🎯 AI Agent Tools (12 Custom Tools)
+
+**Strands Framework Implementation** - Each tool is a Python function with:
+- Input/output schemas (Pydantic models)
+- Error handling and validation
+- Integration with external APIs (FDIC, SEC EDGAR)
+- S3 operations for document storage
+
+1. `get_fdic_data` - Current FDIC banking data (live API integration)
+2. `search_fdic_bank` - Search FDIC by bank name
+3. `compare_banks` - Peer performance comparison with trend analysis
+4. `get_sec_filings` - SEC EDGAR filings (10-K, 10-Q)
+5. `generate_bank_report` - Comprehensive multi-metric analysis
+6. `answer_banking_question` - General Q&A with context
+7. `search_banks` - Bank search by name/ticker (500+ banks)
+8. `upload_csv_to_s3` - Upload CSV data with validation
+9. `analyze_csv_peer_performance` - Analyze custom CSV data
+10. `analyze_and_upload_pdf` - Upload and analyze PDFs (PyPDF2 + Claude)
+11. `analyze_uploaded_pdf` - Analyze PDFs in S3
+12. `chat_with_documents` - Multi-turn document Q&A with memory
+
+**Tool Orchestration**: Claude Sonnet 4.5 automatically selects the right tool(s) based on user intent. For example:
+- "Compare JPMorgan and Bank of America ROA" → `compare_banks` tool
+- "What are Webster's key risks?" → `get_sec_filings` + `chat_with_documents` tools
+- "Analyze my custom peer data" → `upload_csv_to_s3` + `analyze_csv_peer_performance` tools
+
+## 🌟 Amazon Bedrock AgentCore Highlights
+
+### What is AgentCore?
+Amazon Bedrock AgentCore is a **managed agent runtime** that handles:
+- ✅ **Tool Orchestration** - Automatically routes requests to the right tools
+- ✅ **Conversational Memory** - Maintains context across multi-turn conversations
+- ✅ **Streaming Responses** - Real-time token streaming for better UX
+- ✅ **Error Handling** - Automatic retries and graceful degradation
+- ✅ **Observability** - Built-in CloudWatch logging and tracing
+- ✅ **Scalability** - Serverless, auto-scaling infrastructure
+
+### Why AgentCore vs. Custom Agent?
+| Feature | Custom Agent | Amazon Bedrock AgentCore |
+|---------|-------------|---------------|
+| Infrastructure | You manage | AWS manages |
+| Memory | Build yourself | Built-in |
+| Tool routing | Manual logic | Automatic (Claude) |
+| Scaling | Configure yourself | Auto-scales |
+| Monitoring | Setup CloudWatch | Pre-integrated |
+| Cost | EC2/Lambda costs | Pay per invocation |
+
+### Strands Framework Benefits
+- **Type Safety** - Pydantic schemas for all tool inputs/outputs
+- **Easy Testing** - Test tools independently before deployment
+- **Version Control** - Agent code in Git, deployed via CLI
+- **Hot Reload** - Update agent without infrastructure changes
+- **Local Development** - Test locally before deploying to AWS
+
+
+
+## 🚀 Deployment Guide
+
+### Prerequisites
+
+**Required:**
+- AWS Account with administrative access
+- AWS Bedrock access enabled (see setup below)
+- AWS CLI configured (`aws configure`)
+- Node.js 18+ (for frontend build)
+- Python 3.11+ (for AgentCore CLI)
+- AgentCore CLI: `pip install bedrock-agentcore-starter-toolkit`
+
+### Install Prerequisites
+
+**Mac/Linux:**
 ```bash
-./quick-start.sh
+# Install Homebrew (if not installed)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Install required tools
+brew install awscli node python@3.11 git
+pip install bedrock-agentcore-starter-toolkit
 ```
 
-### Components
+**Windows (PowerShell as Administrator):**
+```powershell
+# Install Chocolatey + all tools
+Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+choco install python git awscli nodejs jq -y
+pip install bedrock-agentcore-starter-toolkit
 
-- **Agent**: Bedrock AgentCore configuration and multi-account agent
-- **Infrastructure**: Setup scripts for central and child accounts
-- **Data**: Sample financial and trade risk data
-- **Frontend**: React dashboard for demonstrations
-- **Backend**: Node.js API server
+# Add Python Scripts to PATH permanently (for agentcore command)
+echo 'export PATH="$PATH:/d/Users/$USER/AppData/Roaming/Python/Python314/Scripts"' >> ~/.bashrc
+source ~/.bashrc
+```
 
-### Data Flow
+**Enable Bedrock Access:**
+1. Go to [AWS Bedrock Console](https://console.aws.amazon.com/bedrock/)
+2. Navigate to **Model Access** in the left sidebar
+3. Click **Request model access**
+4. Enable: **Anthropic Claude Sonnet 4.5**
+5. Wait for approval (usually instant)
 
-1. **Credit Officer Request**: Submit loan evaluation via React frontend
-2. **AgentCore Orchestration**: Connects to all 6 LOB MCP servers + external sources
-3. **MCP Protocol Queries**: Parallel data gathering through standardized MCP interface
-4. **Data Synthesis**: Claude processes and combines information from 11+ sources
-5. **Risk Calculation**: Total exposure, concentration risk, credit scoring
-6. **Credit Memo Generation**: Comprehensive report with recommendation
-7. **Officer Review**: Structured decision support with full audit trail
+### Step-by-Step Deployment
 
-**Total Processing Time: 20-30 seconds**
+**Step 1: Clone Repository**
+```bash
+git clone https://github.com/smakkapati-repo/multi-account-agentcore.git
+cd multi-account-agentcore
+```
 
-### Key Features
 
-- **MCP Standardization**: All LOBs expose data through standardized MCP protocol
-- **Real-time Data Access**: Live queries across all business units via MCP servers
-- **Intelligent Synthesis**: AI-powered analysis and recommendation generation
-- **Audit Trail**: Complete data lineage and source citations
-- **Security**: Cross-account IAM with MCP-controlled access to LOB resources
-- **Scalability**: Parallel processing and caching optimization
-- **Cost Efficiency**: $10-20 in API costs vs. $500 in analyst time per assessment
+
+**Step 2: Configure AWS CLI**
+
+**Mac/Linux/Windows:**
+```bash
+aws configure
+# Enter your AWS Access Key ID
+# Enter your AWS Secret Access Key
+# Enter region: (choose your preferred region, e.g., us-east-1, us-west-2, eu-west-1)
+# Enter output format: json
+```
+
+**Step 3: Deploy Single-Account Architecture**
+
+**Mac/Linux/Windows:**
+```bash
+cd multi-account-agentcore
+./cfn/scripts/deploy-all.sh
+```
+
+**Deployment Progress:**
+- 🔵 **[0/4] Auth (Cognito)** (~2-3 minutes)
+  - Creates Cognito User Pool
+  - Configures OAuth 2.0 authentication
+  - Sets up Hosted UI
+
+- 🔵 **[1/4] Infrastructure** (~5-7 minutes)
+  - VPC with public/private subnets
+  - Application Load Balancer
+  - ECS cluster
+  - S3 buckets
+  - ECR repositories
+
+- 🔵 **[2/4] AgentCore Agent** (~5-7 minutes)
+  - Builds and deploys Python agent with 12 tools
+  - Adds S3 permissions automatically
+  - Creates conversational memory
+
+- 🔵 **[3/4] Backend** (~7-10 minutes)
+  - Creates CodeBuild project
+  - Uploads source to S3
+  - Builds Docker image via CodeBuild
+  - Pushes to ECR
+  - Deploys ECS service
+
+- 🔵 **[4/4] Frontend** (~2-3 minutes)
+  - Builds React app
+  - Uploads to S3
+  - Creates CloudFront distribution
+  - Updates Cognito callback URLs
+
+**Total Time**: ~20-25 minutes
+
+**Step 4: Access Your Application**
+
+After deployment completes, you'll see:
+```
+✅ DEPLOYMENT COMPLETE WITH COGNITO!
+🌐 Application URL: https://[your-cloudfront-url].cloudfront.net
+🔐 Login URL: https://bankiq-auth-[account-id].auth.us-east-1.amazoncognito.com
+```
+
+**Next Steps:**
+1. Visit the Application URL
+2. Click 'Sign In with AWS Cognito'
+3. Click 'Sign up' to create your account
+4. Verify your email and log in
+
+## 🔍 Verify Deployment
+
+**Check Health:**
+
+**Mac/Linux:**
+```bash
+# Get CloudFront URL
+CLOUDFRONT_URL=$(aws cloudfront list-distributions --query "DistributionList.Items[?contains(Origins.Items[0].DomainName, 'bankiq-frontend')].DomainName" --output text)
+
+# Test health endpoint
+curl https://$CLOUDFRONT_URL/api/health
+# Expected: {"status":"healthy","service":"BankIQ+ Backend"}
+```
+
+**Windows (PowerShell):**
+```powershell
+# Get CloudFront URL
+$CLOUDFRONT_URL = aws cloudfront list-distributions --query "DistributionList.Items[?contains(Origins.Items[0].DomainName, 'bankiq-frontend')].DomainName" --output text
+
+# Test health endpoint
+Invoke-WebRequest -Uri "https://$CLOUDFRONT_URL/api/health"
+```
+
+**View Logs (All Platforms):**
+```bash
+# ECS backend logs
+aws logs start-live-tail --log-group-identifiers /ecs/bankiq-backend
+
+# AgentCore logs
+agentcore status
+```
+
+## ⚡ Performance & Caching
+
+BankIQ+ uses **node-cache** for in-memory caching to dramatically improve performance:
+
+- **SEC Filings**: 2000ms → 1ms (24 hour cache)
+- **Bank Search**: 500ms → 1ms (7 day cache)
+- **FDIC Data**: 1500ms → 1ms (1 hour cache)
+
+**Cache Management:**
+```bash
+# View cache statistics
+curl http://localhost:3001/api/admin/cache-stats
+
+# Clear all caches
+curl -X POST http://localhost:3001/api/admin/clear-cache \
+  -H "Content-Type: application/json" \
+  -d '{"type": "all"}'
+```
+
+## 💰 Cost Estimate
+
+Monthly costs (24/7 operation):
+- ECS Fargate: $15-20
+- ALB: $16-20
+- CloudFront: $1-5
+- S3: $1-2
+- Bedrock: $10-30
+
+**Total**: ~$50-90/month
+
+## 🔄 Multi-Account Deployment (Advanced)
+
+For hub-and-spoke architecture across 3 AWS accounts:
+
+**Prerequisites:**
+- 3 AWS accounts (Central + 2 Child accounts)
+- AWS CLI profiles configured: `default`, `child1`, `child2-demo`
+- Cross-account IAM roles setup
+
+**Deploy:**
+```bash
+cd multi-account-agentcore
+./deploy-multi-account.sh
+```
+
+**Architecture:**
+- **Central Account**: Orchestrator agent + Gateway + Frontend/Backend
+- **East Account**: MCP-enabled agent + Regional data
+- **West Account**: MCP-enabled agent + Regional data
+
+**Use Cases:**
+- Multi-region banking operations
+- Data sovereignty requirements
+- Distributed agent orchestration
+- Cross-account analytics
+
+See [ARCHITECTURE_COMPARISON.md](ARCHITECTURE_COMPARISON.md) for detailed comparison.
+
+## 🧹 Cleanup
+
+To delete all resources:
+
+**Mac/Linux/Windows:**
+```bash
+# IMPORTANT: Run from project root directory
+cd multi-account-agentcore
+./cfn/scripts/cleanup.sh
+```
+
+This will remove:
+- ✅ CloudFormation stacks (frontend, backend, infrastructure, auth)
+- ✅ Cognito User Pool and all users
+- ✅ S3 buckets (with contents)
+- ✅ ECR images and repositories
+- ✅ ECS cluster and services
+- ✅ CloudFront distribution
+- ✅ AgentCore agent
+- ✅ All associated resources
+
+**Time**: ~10-15 minutes
+
+## 📝 Monitoring
+
+**All Platforms:**
+```bash
+# View ECS logs
+aws logs tail /ecs/bankiq-backend --follow
+
+# View AgentCore logs (run from backend directory)
+cd backend && agentcore status
+```
+
+
+
+## 🆘 Troubleshooting
+
+**Issue**: CloudFront returns 502
+- Check ECS task health
+- Check ALB target health
+- View logs: `aws logs start-live-tail --log-group-identifiers /ecs/bankiq-backend`
+
+**Issue**: Agent not responding
+- Check AgentCore status: `cd backend && agentcore status`
+- Verify agent ARN in ECS task environment variables
+
+For detailed troubleshooting, see the [Deployment Guide](docs/DEPLOYMENT_GUIDE.md).
+
+## 📄 License
+
+Apache License 2.0
+
+## 👥 Authors
+
+Shashi Makkapati, Senthil Kamala Rathinam, Jacob Scheatzle

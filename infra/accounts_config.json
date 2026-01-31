@@ -1,0 +1,33 @@
+{
+  "central": {
+    "account_id": "164543933824",
+    "profile": "default",
+    "region": "us-east-1",
+    "agentcore_role_name": "AgentCoreMultiAccountRole",
+    "s3_bucket_prefix": "agentcore-multiaccountpoc"
+  },
+  "children": [
+    {
+      "id": "east_region",
+      "account_id": "891377397197",
+      "profile": "child1",
+      "name": "East Region Banking",
+      "description": "East region banks - SEC filings and financial data",
+      "s3_bucket_prefix": "east-region-banking",
+      "iam_role_name": "CentralAccountAccessRole",
+      "opensearch_collection_name": "east-region-kb",
+      "data_directory": "data/east_region"
+    },
+    {
+      "id": "west_region",
+      "account_id": "058264155998",
+      "profile": "child2-demo",
+      "name": "West Region Banking",
+      "description": "West region banks - SEC filings and financial data",
+      "s3_bucket_prefix": "west-region-banking",
+      "iam_role_name": "CentralAccountAccessRole",
+      "opensearch_collection_name": "west-region-kb",
+      "data_directory": "data/west_region"
+    }
+  ]
+}

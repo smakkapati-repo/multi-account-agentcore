@@ -20,39 +20,10 @@ async function getAuthHeaders() {
   return headers;
 }
 
-// Helper function to safely parse JSON responses
-async function safeJsonParse(response) {
-  const contentType = response.headers.get('content-type');
-  
-  // Check if response is JSON
-  if (!contentType || !contentType.includes('application/json')) {
-    const text = await response.text();
-    console.error('Server returned non-JSON response:', text.substring(0, 200));
-    throw new Error(`Server error: Expected JSON but got ${contentType || 'unknown content type'}. Response: ${text.substring(0, 100)}`);
-  }
-  
-  try {
-    return await response.json();
-  } catch (e) {
-    console.error('Failed to parse JSON:', e);
-    throw new Error('Invalid JSON response from server');
-  }
-}
-
 // Removed callBackend function - all endpoints now use async jobs for reliability
 
 export const api = {
   async getSECReports(bankName, year, useRag, cik) {
-    // RAG mode: Get pre-indexed filings from S3
-    if (useRag) {
-      const response = await fetch(`${BACKEND_URL}/api/get-rag-filings`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bankName })
-      });
-      return await safeJsonParse(response);
-    }
-    
     // Use direct backend endpoint for faster, more reliable SEC filings
     if (cik && cik !== '0000000000') {
       try {
@@ -62,7 +33,7 @@ export const api = {
           body: JSON.stringify({ bankName, cik })
         });
         
-        const data = await safeJsonParse(response);
+        const data = await response.json();
         
         if (data.success) {
           return {
@@ -248,52 +219,43 @@ Your detailed analysis here...`;
   },
 
   async getFDICData() {
-    // Return mock data directly - agent tool is currently unavailable
-    console.log('Using mock FDIC data (agent tool unavailable)');
+    const job = await this.submitJob('Use the get_fdic_data tool to get current FDIC banking data. Call get_fdic_data() to fetch real-time financial metrics from FDIC API.');
+    const result = await this.pollJobUntilComplete(job.jobId);
+    
+    // Parse the agent response which should contain JSON from the tool
+    let fdicData = [];
+    try {
+      const response = result.result;
+      // Try to extract JSON from the response
+      const jsonMatch = response.match(/\{[^]*?"success"\s*:\s*true[^]*?"data"\s*:\s*\[[^]*?\][^]*?\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        if (parsed.success && parsed.data) {
+          fdicData = parsed.data;
+          console.log('✓ Extracted FDIC data:', fdicData.length, 'records');
+        }
+      }
+    } catch (e) {
+      console.warn('Could not parse FDIC data from agent response:', e.message);
+    }
+    
     return { 
       success: true, 
       result: { 
-        data: [], 
+        data: fdicData, 
         data_source: 'FDIC Call Reports (Real-time API)' 
       } 
     };
   },
 
-  async chatWithAI(question, bankName, reports, useRag, cik, useStreaming = false) {
-    if (useStreaming) {
-      // Return promise that resolves when streaming completes
-      return new Promise((resolve, reject) => {
-        let fullResponse = '';
-        
-        this.streamChat(
-          question,
-          bankName,
-          reports,
-          useRag,
-          cik,
-          (chunk) => {
-            fullResponse += chunk;
-          },
-          () => {
-            let cleanResponse = fullResponse;
-            if (cleanResponse.includes('DATA:')) {
-              cleanResponse = cleanResponse.replace(/DATA:\s*\{[\s\S]*?\}\s*\n+/g, '').trim();
-            }
-            resolve({ response: cleanResponse, sources: [] });
-          },
-          (error) => {
-            reject(new Error(error));
-          }
-        );
-      });
-    }
-    
-    // Original polling method
+  async chatWithAI(question, bankName, reports, useRag, cik) {
+    // Build context-aware prompt
     let prompt = question;
     
     if (bankName) {
       prompt = `${question} about ${bankName}`;
       
+      // Add available reports context if provided
       if (reports && (reports['10-K']?.length > 0 || reports['10-Q']?.length > 0)) {
         const reportsList = [
           ...(reports['10-K'] || []).map(r => `${r.form} filed ${r.filing_date}`),
@@ -304,30 +266,20 @@ Your detailed analysis here...`;
       }
     }
     
-    const job = await this.submitJob(`Answer this banking question: "${prompt}" about ${bankName || 'general banking'}`);
+    const job = await this.submitJob(`Use the answer_banking_question tool to answer this question: "${prompt}". Call answer_banking_question with question: "${prompt}" and context: "${bankName || 'General banking question'}".`);
     const result = await this.pollJobUntilComplete(job.jobId);
     
+    // Clean response - remove DATA: lines from chat responses
     let cleanResponse = result.result;
-    
-    // Remove DATA: lines (tool output) from response
     if (cleanResponse && cleanResponse.includes('DATA:')) {
-      cleanResponse = cleanResponse.replace(/DATA:\s*\{[\s\S]*?\}\s*\n*/g, '');
+      cleanResponse = cleanResponse.replace(/DATA:\s*\{[\s\S]*?\}\s*\n+/g, '').trim();
     }
-    
-    // Remove "I don't have access to..." preambles
-    cleanResponse = cleanResponse.replace(/^I don't have access to (?:a |an |the )?[\w_]+.*?(?:tool|function).*?(?:\.|However,|But)\s*/i, '');
-    
-    // Remove "Let me gather/get..." lines
-    cleanResponse = cleanResponse.replace(/^Let me (?:gather|get|fetch).*?:\s*/gm, '');
-    cleanResponse = cleanResponse.replace(/^Now let me (?:gather|get|fetch).*?:\s*/gm, '');
-    
-    cleanResponse = cleanResponse.trim();
     
     return { response: cleanResponse, sources: [] };
   },
 
   async generateFullReport(bankName) {
-    const job = await this.submitJob(`Generate a comprehensive financial analysis report for ${bankName} using available tools.`);
+    const job = await this.submitJob(`Use the generate_bank_report tool to create a comprehensive financial analysis report for ${bankName}. Call generate_bank_report with bank_name: "${bankName}".`);
     const result = await this.pollJobUntilComplete(job.jobId);
     
     // Clean response - remove DATA: lines from reports
@@ -350,64 +302,30 @@ Your detailed analysis here...`;
     });
     
     if (!response.ok) {
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Job submission failed: ${response.status}`);
-      }
       throw new Error(`Job submission failed: ${response.status}`);
     }
     
-    return safeJsonParse(response);
+    return response.json();
   },
 
   async checkJobStatus(jobId) {
     const response = await fetch(`${BACKEND_URL}/api/jobs/${jobId}`);
     
     if (!response.ok) {
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Job status check failed: ${response.status}`);
-      }
       throw new Error(`Job status check failed: ${response.status}`);
     }
     
-    return safeJsonParse(response);
+    return response.json();
   },
 
   async getJobResult(jobId) {
     const response = await fetch(`${BACKEND_URL}/api/jobs/${jobId}/result`);
     
-    // Get response body as text first (can only read once)
-    const responseText = await response.text();
+    const data = await response.json();
     
-    // Check if response is OK
-    if (!response.ok) {
-      console.error(`Job result error (${response.status}):`, responseText.substring(0, 200));
-      
-      // Try to parse as JSON to get error message
-      try {
-        const errorData = JSON.parse(responseText);
-        throw new Error(errorData.error || errorData.message || `Job failed with status ${response.status}`);
-      } catch (parseError) {
-        // Not JSON, return text error
-        throw new Error(`Job failed (${response.status}): ${responseText.substring(0, 100)}`);
-      }
-    }
-    
-    // Parse successful response
-    let data;
-    try {
-      data = JSON.parse(responseText);
-    } catch (parseError) {
-      console.error('Failed to parse job result:', responseText.substring(0, 200));
-      throw new Error('Invalid response from server');
-    }
-    
-    // Check if job itself failed
-    if (data.status === 'failed') {
-      throw new Error(data.error || 'Job processing failed');
+    // If job failed, throw error with the actual error message
+    if (!response.ok || data.status === 'failed') {
+      throw new Error(data.error || `Job failed with status ${response.status}`);
     }
     
     return data;
@@ -438,7 +356,7 @@ Your detailed analysis here...`;
         body: JSON.stringify({ query })
       });
       
-      const data = await safeJsonParse(response);
+      const data = await response.json();
       
       if (data.success && data.results) {
         console.log('Search results:', data.results);
@@ -453,20 +371,26 @@ Your detailed analysis here...`;
   },
 
   async chatWithLocalFiles(message, analyzedDocs) {
-    if (!analyzedDocs || analyzedDocs.length === 0) {
-      throw new Error('No documents uploaded. Please upload a PDF first.');
-    }
-    
-    const doc = analyzedDocs[0];
-    
-    if (!doc.s3_key) {
-      throw new Error('Document not properly uploaded to S3. Please try uploading again.');
-    }
-    
-    const prompt = `Answer this question about ${doc.bank_name}'s ${doc.form_type} filing: ${message}
+    let prompt = message;
+    if (analyzedDocs && analyzedDocs.length > 0) {
+      const doc = analyzedDocs[0];
+      if (doc.s3_key) {
+        // Use the chat_with_documents tool for Q&A (not analyze_uploaded_pdf which is for full reports)
+        prompt = `Use the chat_with_documents tool to answer this question about the uploaded document.
 
-IMPORTANT: Use get_local_document_data(s3_key="${doc.s3_key}", bank_name="${doc.bank_name}") to retrieve the document data, then provide a 3-4 paragraph professional analysis.`;
-    
+Question: "${message}"
+
+Document details:
+- s3_key: "${doc.s3_key}"
+- bank_name: "${doc.bank_name}"
+- form_type: "${doc.form_type}"
+- year: ${doc.year}
+
+Call chat_with_documents with these parameters to get the answer from the document.`;
+      } else {
+        prompt = `Answer this question about ${doc.bank_name} ${doc.form_type} ${doc.year}: ${message}`;
+      }
+    }
     const job = await this.submitJob(prompt);
     const result = await this.pollJobUntilComplete(job.jobId);
     return { response: result.result, sources: [] };
@@ -483,7 +407,7 @@ IMPORTANT: Use get_local_document_data(s3_key="${doc.s3_key}", bank_name="${doc.
       });
       
       if (response.ok) {
-        const result = await safeJsonParse(response);
+        const result = await response.json();
         console.log('✓ Agent-powered upload successful');
         return result;
       }
@@ -506,261 +430,43 @@ IMPORTANT: Use get_local_document_data(s3_key="${doc.s3_key}", bank_name="${doc.
       throw new Error(`Upload failed: ${response.status}`);
     }
     
-    const result = await safeJsonParse(response);
+    const result = await response.json();
     return { ...result, method: 'direct' };
   },
 
-  async checkRagAvailability() {
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/rag/status`);
-      const data = await safeJsonParse(response);
-      return { available: data.available || false, kbId: data.kbId };
-    } catch (err) {
-      return { available: false };
-    }
-  },
-
-  async getRagBanks() {
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/rag/banks`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch RAG banks: ${response.status}`);
-      }
-      return await safeJsonParse(response);
-    } catch (err) {
-      console.error('Error fetching RAG banks:', err);
-      return { success: false, banks: [] };
-    }
-  },
-
-  async addBankToRAG(bankName, cik) {
-    const response = await fetch(`${BACKEND_URL}/api/add-bank-to-rag`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ bankName, cik })
-    });
-    
-    const contentType = response.headers.get('content-type');
-    
-    if (!response.ok) {
-      // Try to parse error as JSON, fallback to text
-      let errorMessage = 'Failed to add bank to RAG';
-      try {
-        if (contentType && contentType.includes('application/json')) {
-          const error = await response.json();
-          errorMessage = error.error || error.message || errorMessage;
-        } else {
-          const text = await response.text();
-          errorMessage = `Server error (${response.status}): ${text.substring(0, 100)}`;
-        }
-      } catch (parseErr) {
-        errorMessage = `Server error (${response.status})`;
-      }
-      throw new Error(errorMessage);
-    }
-    
-    // Parse successful response
-    return await safeJsonParse(response);
-  },
-
   // Streaming method
-  async streamChat(question, bankName, reports, useRag, cik, onChunk, onComplete, onError) {
-    console.log('[STREAMING] Starting stream for:', question.substring(0, 50));
-    let prompt = question;
-    
-    if (bankName) {
-      prompt = `${question} about ${bankName}`;
-      
-      if (reports && (reports['10-K']?.length > 0 || reports['10-Q']?.length > 0)) {
-        const reportsList = [
-          ...(reports['10-K'] || []).map(r => `${r.form} filed ${r.filing_date}`),
-          ...(reports['10-Q'] || []).map(r => `${r.form} filed ${r.filing_date}`)
-        ].slice(0, 5).join(', ');
-        
-        prompt += `. Available SEC filings: ${reportsList}`;
-      }
-    }
-
+  async callAgentStream(inputText, onChunk, onComplete, onError) {
     try {
-      console.log('[STREAMING] Fetching from:', `${BACKEND_URL}/api/invoke-agent-stream`);
       const response = await fetch(`${BACKEND_URL}/api/invoke-agent-stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ inputText: prompt })
+        body: JSON.stringify({ inputText })
       });
-      console.log('[STREAMING] Response status:', response.status);
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-      let buffer = '';
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop();
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
 
         for (const line of lines) {
           if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.slice(6));
-              if (data.chunk) {
-                console.log('[STREAMING] Chunk received:', data.chunk.substring(0, 20));
-                onChunk(data.chunk);
-              } else if (data.done) {
-                onComplete();
-                return;
-              } else if (data.error) {
-                onError(data.error);
-                return;
-              }
-            } catch (e) {
-              console.error('Parse error:', e);
+            const data = JSON.parse(line.slice(6));
+            if (data.chunk) {
+              onChunk(data.chunk);
+            } else if (data.done) {
+              onComplete();
+            } else if (data.error) {
+              onError(data.error);
             }
           }
         }
       }
-      
-      onComplete();
     } catch (error) {
-      onError(error.message);
-    }
-  },
-
-  // Streaming for peer analytics
-  async streamPeerAnalysis(baseBank, peerBanks, metric, onChunk, onComplete, onError) {
-    console.log('[STREAMING] Starting peer analysis stream');
-    const prompt = `Use the compare_banks tool with these exact parameters:
-- base_bank: "${baseBank}"
-- peer_banks: ["${peerBanks.join('", "')}"]
-- metric: "${metric}"
-
-CRITICAL INSTRUCTIONS:
-1. Call the compare_banks tool
-2. Return the tool's JSON output EXACTLY as-is on the first line
-3. Then provide your expanded analysis below it`;
-
-    // Timeout after 120 seconds (peer analysis needs more time for FDIC data)
-    const timeoutId = setTimeout(() => {
-      onError('Request timeout - please try again or use polling mode');
-    }, 120000);
-
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/invoke-agent-stream`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ inputText: prompt })
-      });
-
-      if (!response.ok) {
-        clearTimeout(timeoutId);
-        onError(`HTTP ${response.status}: ${response.statusText}`);
-        return;
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop();
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.slice(6));
-              if (data.chunk) {
-                onChunk(data.chunk);
-              } else if (data.done) {
-                onComplete();
-                return;
-              } else if (data.error) {
-                onError(data.error);
-                return;
-              }
-            } catch (e) {
-              console.error('Parse error:', e);
-            }
-          }
-        }
-      }
-      
-      clearTimeout(timeoutId);
-      onComplete();
-    } catch (error) {
-      clearTimeout(timeoutId);
-      onError(error.message);
-    }
-  },
-
-  // Streaming for compliance assessment
-  async streamComplianceAssessment(bankName, onChunk, onComplete, onError) {
-    console.log('[STREAMING] Starting compliance assessment stream');
-    const prompt = `Use compliance_risk_assessment("${bankName}") tool. Return ONLY the raw JSON output with NO explanation. Expected format: {"success": true, "overall_score": X, "scores": {...}, "metrics": {...}, "alerts": [...]}`;
-
-    // Timeout after 60 seconds
-    const timeoutId = setTimeout(() => {
-      onError('Request timeout - please try again or use polling mode');
-    }, 60000);
-
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/invoke-agent-stream`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ inputText: prompt })
-      });
-
-      if (!response.ok) {
-        clearTimeout(timeoutId);
-        onError(`HTTP ${response.status}: ${response.statusText}`);
-        return;
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop();
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.slice(6));
-              if (data.chunk) {
-                onChunk(data.chunk);
-              } else if (data.done) {
-                clearTimeout(timeoutId);
-                onComplete();
-                return;
-              } else if (data.error) {
-                clearTimeout(timeoutId);
-                onError(data.error);
-                return;
-              }
-            } catch (e) {
-              console.error('Parse error:', e);
-            }
-          }
-        }
-      }
-      
-      clearTimeout(timeoutId);
-      onComplete();
-    } catch (error) {
-      clearTimeout(timeoutId);
       onError(error.message);
     }
   }

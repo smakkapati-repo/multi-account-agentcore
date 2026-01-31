@@ -1,8 +1,0 @@
-{
-  "account_id": "058264155998",
-  "profile": "child2-demo",
-  "s3_bucket": "child2-trade-kb-058264155998",
-  "iam_role_arn": "arn:aws:iam::058264155998:role/CentralAccountAccessRole",
-  "opensearch_collection_id": null,
-  "opensearch_collection_name": "trade-risk-kb"
-}

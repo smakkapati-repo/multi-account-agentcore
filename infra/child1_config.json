@@ -1,8 +1,0 @@
-{
-  "account_id": "891377397197",
-  "profile": "child1",
-  "s3_bucket": "child1-financial-kb-891377397197",
-  "iam_role_arn": "arn:aws:iam::891377397197:role/CentralAccountAccessRole",
-  "opensearch_collection_id": null,
-  "opensearch_collection_name": "financial-kb"
-}
