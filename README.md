@@ -51,15 +51,15 @@ This pattern combines **Amazon Bedrock AgentCore** with **Model Context Protocol
         ┌────────────────┴────────────────┐
         │                                 │
         ▼                                 ▼
-┌───────────────────┐            ┌───────────────────┐
-│ East Region LOB   │            │ West Region LOB   │
-│ Account: 891...97 │            │ Account: 058...98 │
-│                   │            │                   │
-│ • MCP-enabled     │            │ • MCP-enabled     │
-│ • Regional data   │            │ • Regional data   │
-│ • IAM controls    │            │ • IAM controls    │
-│ • Banks: JPM,BAC  │            │ • Banks: WFC,USB  │
-└───────────────────┘            └───────────────────┘
+┌─────────────────────────┐      ┌─────────────────────────┐
+│ Corporate Banking LOB   │      │ Treasury & Risk LOB     │
+│ Account: 891...97       │      │ Account: 058...98       │
+│                         │      │                         │
+│ • MCP-enabled           │      │ • MCP-enabled           │
+│ • Customer data         │      │ • Risk models           │
+│ • Loan exposure         │      │ • Treasury positions    │
+│ • Banks: JPM,BAC,C      │      │ • Banks: WFC,USB,SCHW   │
+└─────────────────────────┘      └─────────────────────────┘
 ```
 
 **Key Components:**
@@ -73,8 +73,8 @@ This pattern combines **Amazon Bedrock AgentCore** with **Model Context Protocol
 
 This demo implements a banking analytics platform where:
 - **Central Agent**: Orchestrates credit risk assessment queries
-- **East Region LOB**: Owns customer relationship data (JPMorgan, Bank of America, Citigroup)
-- **West Region LOB**: Owns treasury and risk data (Wells Fargo, U.S. Bank, Charles Schwab)
+- **Corporate Banking LOB**: Owns customer relationship data and loan exposure (JPMorgan, Bank of America, Citigroup)
+- **Treasury & Risk LOB**: Owns treasury positions and risk models (Wells Fargo, U.S. Bank, Charles Schwab)
 
 **Business Value:**
 - Evaluate credit risk across multiple LOBs without data centralization
@@ -109,10 +109,10 @@ This demo implements a banking analytics platform where:
 11. `analyze_uploaded_pdf` - PDF deep analysis
 12. `chat_with_documents` - Multi-turn document Q&A
 
-**Multi-Account Orchestrator** (`agent-centralized/orchestrator_agent.py`):
-- `query_east_region` - Query East region banks
-- `query_west_region` - Query West region banks
-- `compare_regions` - Cross-regional comparison
+**Multi-Account Orchestrator** (`agent-orchestrator/orchestrator_agent.py`):
+- `query_corporate_banking` - Query customer relationships and loan exposure
+- `query_treasury_risk` - Query treasury positions and risk models
+- `compare_lobs` - Cross-LOB comparison
 
 ## 🛠️ Technology Stack
 
