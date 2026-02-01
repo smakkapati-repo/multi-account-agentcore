@@ -207,18 +207,17 @@ deploy_lob_agents() {
         print_step "Deploying Corporate Banking Agent to account $CORP_ACCOUNT..."
         cd agents/agent-corporate-banking
         
-        # Configure agent if not already configured
+        # Configure agent (let AgentCore auto-create execution role)
         if [ ! -f .bedrock_agentcore.yaml ]; then
             print_step "Configuring agent..."
-            AGENTCORE_ROLE_ARN="arn:aws:iam::$CORP_ACCOUNT:role/AgentCoreCorporatebankingRole"
-            AWS_PROFILE=$CORP_PROFILE agentcore configure \
+            echo -e "\n\n" | AWS_PROFILE=$CORP_PROFILE agentcore configure \
                 --entrypoint corporate_banking_agent.py \
-                --execution-role $AGENTCORE_ROLE_ARN \
                 --requirements-file requirements.txt \
                 --non-interactive
             print_success "Agent configured"
         fi
         
+        print_step "Launching agent..."
         AWS_PROFILE=$CORP_PROFILE agentcore launch
         CORP_AGENT_ARN=$(AWS_PROFILE=$CORP_PROFILE agentcore status | grep "agent_arn" | cut -d'"' -f4 || echo "")
         cd ../..
@@ -231,18 +230,17 @@ deploy_lob_agents() {
         print_step "Deploying Treasury & Risk Agent to account $RISK_ACCOUNT..."
         cd agents/agent-treasury-risk
         
-        # Configure agent if not already configured
+        # Configure agent (let AgentCore auto-create execution role)
         if [ ! -f .bedrock_agentcore.yaml ]; then
             print_step "Configuring agent..."
-            AGENTCORE_ROLE_ARN="arn:aws:iam::$RISK_ACCOUNT:role/AgentCoreTreasuryriskRole"
-            AWS_PROFILE=$RISK_PROFILE agentcore configure \
+            echo -e "\n\n" | AWS_PROFILE=$RISK_PROFILE agentcore configure \
                 --entrypoint treasury_risk_agent.py \
-                --execution-role $AGENTCORE_ROLE_ARN \
                 --requirements-file requirements.txt \
                 --non-interactive
             print_success "Agent configured"
         fi
         
+        print_step "Launching agent..."
         AWS_PROFILE=$RISK_PROFILE agentcore launch
         RISK_AGENT_ARN=$(AWS_PROFILE=$RISK_PROFILE agentcore status | grep "agent_arn" | cut -d'"' -f4 || echo "")
         cd ../..
@@ -293,10 +291,8 @@ deploy_orchestrator() {
         print_step "Configuring orchestrator agent..."
         cd agents/agent-orchestrator
         if [ ! -f .bedrock_agentcore.yaml ]; then
-            AGENTCORE_ROLE_ARN="arn:aws:iam::$CENTRAL_ACCOUNT:role/AgentCoreMultiAccountRole"
-            agentcore configure \
+            echo -e "\n\n" | agentcore configure \
                 --entrypoint orchestrator_agent.py \
-                --execution-role $AGENTCORE_ROLE_ARN \
                 --requirements-file requirements.txt \
                 --non-interactive
             print_success "Agent configured"
