@@ -1,0 +1,90 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'LoanIQ - Cognito User Pool for Authentication'
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: loaniq
+    Description: Project name for resource naming
+
+Resources:
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub '${ProjectName}-users'
+      AutoVerifiedAttributes:
+        - email
+      UsernameAttributes:
+        - email
+      Schema:
+        - Name: email
+          AttributeDataType: String
+          Required: true
+          Mutable: false
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+      AccountRecoverySetting:
+        RecoveryMechanisms:
+          - Name: verified_email
+            Priority: 1
+
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: !Sub '${ProjectName}-web-client'
+      UserPoolId: !Ref UserPool
+      GenerateSecret: false
+      AllowedOAuthFlows:
+        - code
+      AllowedOAuthScopes:
+        - email
+        - openid
+        - profile
+      AllowedOAuthFlowsUserPoolClient: true
+      CallbackURLs:
+        - http://localhost:3000
+        - !Sub 'https://${CloudFrontDistribution.DomainName}'
+      LogoutURLs:
+        - http://localhost:3000
+        - !Sub 'https://${CloudFrontDistribution.DomainName}'
+      SupportedIdentityProviders:
+        - COGNITO
+      ExplicitAuthFlows:
+        - ALLOW_USER_SRP_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+
+  UserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: !Sub '${ProjectName}-auth-${AWS::AccountId}'
+      UserPoolId: !Ref UserPool
+
+Outputs:
+  UserPoolId:
+    Description: Cognito User Pool ID
+    Value: !Ref UserPool
+    Export:
+      Name: !Sub '${ProjectName}-UserPoolId'
+
+  UserPoolClientId:
+    Description: Cognito User Pool Client ID
+    Value: !Ref UserPoolClient
+    Export:
+      Name: !Sub '${ProjectName}-UserPoolClientId'
+
+  UserPoolDomain:
+    Description: Cognito Hosted UI Domain
+    Value: !Sub '${ProjectName}-auth-${AWS::AccountId}.auth.${AWS::Region}.amazoncognito.com'
+    Export:
+      Name: !Sub '${ProjectName}-UserPoolDomain'
+
+  Region:
+    Description: AWS Region
+    Value: !Ref AWS::Region
+    Export:
+      Name: !Sub '${ProjectName}-Region'

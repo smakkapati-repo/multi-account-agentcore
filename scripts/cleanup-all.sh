@@ -44,7 +44,10 @@ echo -e "Phase 1: Delete Frontend (CloudFront + S3)"
 echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
 echo ""
 
-# Delete CloudFront stack
+echo "🗑️  Deleting Cognito User Pool..."
+aws cloudformation delete-stack --stack-name loaniq-auth --profile $CENTRAL_PROFILE 2>/dev/null || echo "Stack not found"
+echo "✅ Cognito stack deletion initiated"
+
 echo "🗑️  Deleting CloudFront stack..."
 aws cloudformation delete-stack --stack-name loaniq-frontend --profile $CENTRAL_PROFILE 2>/dev/null || echo "Stack not found"
 echo "✅ CloudFront stack deletion initiated"
@@ -139,6 +142,7 @@ echo ""
 
 echo "🗑️  Removing local temporary files..."
 rm -f .corp_agent_arn .risk_agent_arn .gateway_url .cloudfront_url
+rm -f .user_pool_id .user_pool_client_id .cognito_domain
 rm -f infra/central_config.json infra/corporate_banking_config.json infra/treasury_risk_config.json
 rm -f agents/agent-orchestrator/agentcore.yaml.bak
 echo "✅ Local files cleaned"

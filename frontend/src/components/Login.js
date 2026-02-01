@@ -26,7 +26,7 @@ const Login = ({ onCognitoLogin }) => {
       >
         <LockOutlinedIcon sx={{ fontSize: 48, color: '#A020F0', mb: 2 }} />
         <Typography variant="h4" gutterBottom sx={{ fontWeight: 600 }}>
-          BankIQ+ Login
+          LoanIQ Login
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
           Secure authentication powered by AWS Cognito

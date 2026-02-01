@@ -289,6 +289,30 @@ deploy_frontend() {
         fi
     fi
     
+    # Deploy Cognito
+    if confirm "Deploy Cognito User Pool for authentication?"; then
+        print_step "Deploying Cognito stack..."
+        aws cloudformation deploy \
+            --template-file cfn/templates/auth.yaml \
+            --stack-name loaniq-auth \
+            --parameter-overrides ProjectName=loaniq \
+            --capabilities CAPABILITY_IAM
+        print_success "Cognito User Pool deployed"
+        
+        USER_POOL_ID=$(aws cloudformation describe-stacks --stack-name loaniq-auth --query "Stacks[0].Outputs[?OutputKey=='UserPoolId'].OutputValue" --output text)
+        USER_POOL_CLIENT_ID=$(aws cloudformation describe-stacks --stack-name loaniq-auth --query "Stacks[0].Outputs[?OutputKey=='UserPoolClientId'].OutputValue" --output text)
+        COGNITO_DOMAIN=$(aws cloudformation describe-stacks --stack-name loaniq-auth --query "Stacks[0].Outputs[?OutputKey=='UserPoolDomain'].OutputValue" --output text)
+        COGNITO_REGION=$(aws cloudformation describe-stacks --stack-name loaniq-auth --query "Stacks[0].Outputs[?OutputKey=='Region'].OutputValue" --output text)
+        
+        print_info "User Pool ID: $USER_POOL_ID"
+        print_info "Client ID: $USER_POOL_CLIENT_ID"
+        print_info "Domain: $COGNITO_DOMAIN"
+        
+        echo "$USER_POOL_ID" > .user_pool_id
+        echo "$USER_POOL_CLIENT_ID" > .user_pool_client_id
+        echo "$COGNITO_DOMAIN" > .cognito_domain
+    fi
+    
     if confirm "Deploy CloudFront + S3 infrastructure?"; then
         print_step "Deploying CloudFormation stack..."
         aws cloudformation deploy \
@@ -305,6 +329,24 @@ deploy_frontend() {
         print_info "CloudFront URL: $CLOUDFRONT_URL"
         print_info "S3 Bucket: $S3_BUCKET (private)"
         echo "$CLOUDFRONT_URL" > .cloudfront_url
+        
+        # Update Cognito callback URLs with CloudFront URL
+        if [ -f .user_pool_client_id ] && [ -f .user_pool_id ]; then
+            print_step "Updating Cognito callback URLs..."
+            USER_POOL_ID=$(cat .user_pool_id)
+            USER_POOL_CLIENT_ID=$(cat .user_pool_client_id)
+            
+            aws cognito-idp update-user-pool-client \
+                --user-pool-id $USER_POOL_ID \
+                --client-id $USER_POOL_CLIENT_ID \
+                --callback-urls "http://localhost:3000" "$CLOUDFRONT_URL" \
+                --logout-urls "http://localhost:3000" "$CLOUDFRONT_URL" \
+                --allowed-o-auth-flows code \
+                --allowed-o-auth-scopes email openid profile \
+                --allowed-o-auth-flows-user-pool-client \
+                --supported-identity-providers COGNITO 2>/dev/null || true
+            print_success "Cognito callback URLs updated"
+        fi
     fi
     
     if [ -f .gateway_url ]; then
@@ -320,10 +362,16 @@ deploy_frontend() {
                 print_info "Dependencies already installed"
             fi
             
-            print_step "Configuring Gateway URL..."
-            echo "REACT_APP_GATEWAY_URL=$GATEWAY_URL" > .env
+            print_step "Configuring environment variables..."
+            cat > .env <<EOF
+REACT_APP_GATEWAY_URL=$GATEWAY_URL
+REACT_APP_USER_POOL_ID=$(cat ../.user_pool_id 2>/dev/null || echo '')
+REACT_APP_USER_POOL_CLIENT_ID=$(cat ../.user_pool_client_id 2>/dev/null || echo '')
+REACT_APP_COGNITO_DOMAIN=$(cat ../.cognito_domain 2>/dev/null || echo '')
+REACT_APP_COGNITO_REGION=us-east-1
+EOF
             cd ..
-            print_success "Gateway URL configured"
+            print_success "Environment configured"
             
             print_step "Building React app..."
             cd frontend
