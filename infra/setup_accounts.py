@@ -305,6 +305,11 @@ def setup_child_account(config, child_id):
         )
         agentcore_role_arn = response['Role']['Arn']
         print(f"  ✅ Created AgentCore role: {agentcore_role_arn}")
+        
+        # Wait for IAM role to propagate
+        print(f"  ⏳ Waiting for IAM role propagation (30 seconds)...")
+        import time
+        time.sleep(30)
     except iam_client.exceptions.EntityAlreadyExistsException:
         response = iam_client.get_role(RoleName=agentcore_role_name)
         agentcore_role_arn = response['Role']['Arn']
