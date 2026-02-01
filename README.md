@@ -142,24 +142,63 @@ For production deployments, integrate with your enterprise's existing data provi
 - **[Agent Development](docs/AGENT_DEVELOPMENT.md)** - Building custom tools
 - **[Data Sources](docs/CREDIT_RISK_DATA_SOURCES.md)** - Synthetic vs. commercial data options
 
-## 🚀 Quick Start
+## 📋 Prerequisites
 
-### Prerequisites
-- 3 AWS Accounts with administrative access
-- AWS Bedrock access enabled in all accounts
-- AWS CLI configured with profiles: `default`, `child1`, `child2-demo`
-- Node.js 18+, Python 3.11+
-- AgentCore CLI: `pip install bedrock-agentcore-starter-toolkit`
+### Required
 
-### Deploy Multi-Account Pattern
+**1. Three AWS Accounts**
+- Central Account (orchestrator)
+- Corporate Banking LOB Account
+- Treasury & Risk LOB Account
 
+**2. AWS CLI Configured**
 ```bash
-git clone https://github.com/smakkapati-repo/multi-account-agentcore.git
-cd multi-account-agentcore
-./deploy-multi-account.sh
+# Configure profiles for each account
+aws configure --profile default      # Central account
+aws configure --profile child1       # Corporate Banking
+aws configure --profile child2-demo  # Treasury & Risk
+
+# Verify
+aws sts get-caller-identity --profile default
+aws sts get-caller-identity --profile child1
+aws sts get-caller-identity --profile child2-demo
 ```
 
+**3. Amazon Bedrock Model Access**
+- Enable **Claude Sonnet 4.5** in all 3 accounts
+- AWS Console → Bedrock → Model access → Request access
+
+**4. Software**
+- Python 3.11+: `python3 --version`
+- Node.js 18+: `node --version`
+- AgentCore CLI: `pip install bedrock-agentcore-starter-toolkit`
+
+**5. IAM Permissions**
+- AdministratorAccess (or Bedrock, S3, IAM, CloudWatch, CodeBuild permissions)
+
+## 🚀 Quick Start
+
+### One-Command Deployment
+
+```bash
+git clone https://github.com/smakkapati-repo/Centralized-Amazon-Bedrock-AgentCore-with-Distributed-MCP-Data-Sources.git
+cd Centralized-Amazon-Bedrock-AgentCore-with-Distributed-MCP-Data-Sources
+./scripts/deploy-all.sh
+```
+
+On first run, the script will:
+1. ✅ Prompt for your 3 AWS account IDs and CLI profiles
+2. ✅ Verify each account and save configuration
+3. ✅ Generate synthetic data automatically
+4. ✅ Create S3 buckets and IAM roles
+5. ✅ Upload data to LOB accounts
+6. ✅ Deploy LOB agents with MCP servers
+7. ✅ Deploy orchestrator with MCP client + Gateway
+8. ✅ Build and deploy React frontend to CloudFront
+
 **Deploy Time**: ~30-40 minutes
+
+**Estimated Cost**: ~$55-90/month (or $0 if deleted after demo)
 
 ## 💰 Cost Estimate
 
@@ -192,7 +231,7 @@ Monthly costs for 24/7 operation:
 
 ```bash
 cd multi-account-agentcore
-./cfn/scripts/cleanup.sh
+./scripts/cleanup.sh
 ```
 
 ## 📄 License

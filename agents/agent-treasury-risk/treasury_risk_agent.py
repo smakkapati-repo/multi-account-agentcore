@@ -5,14 +5,25 @@ from bedrock_agentcore.runtime import BedrockAgentCoreApp
 from strands import Agent, tool
 import boto3
 import json
-from pathlib import Path
+import os
 
 app = BedrockAgentCoreApp()
 
-# Load hybrid data
-DATA_FILE = Path(__file__).parent.parent / "data" / "treasury_risk" / "risk_models.json"
-with open(DATA_FILE) as f:
-    RISK_DATA = json.load(f)
+# Load hybrid data from S3
+s3 = boto3.client('s3')
+S3_BUCKET = os.getenv('DATA_BUCKET', 'treasury-risk-058264155998')
+S3_KEY = 'data/risk_models.json'
+
+def load_data_from_s3():
+    """Load risk models data from S3"""
+    try:
+        response = s3.get_object(Bucket=S3_BUCKET, Key=S3_KEY)
+        return json.loads(response['Body'].read().decode('utf-8'))
+    except Exception as e:
+        print(f"Error loading data from S3: {e}")
+        return {"banks": [], "market_data": {}}
+
+RISK_DATA = load_data_from_s3()
 
 s3 = boto3.client('s3')
 

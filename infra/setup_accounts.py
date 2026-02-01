@@ -179,11 +179,7 @@ def setup_child_account(config, child_id):
     print(f"\n📦 Creating S3 bucket: {bucket_name}")
     try:
         s3_client.create_bucket(Bucket=bucket_name)
-        s3_client.put_bucket_versioning(
-            Bucket=bucket_name,
-            VersioningConfiguration={'Status': 'Enabled'}
-        )
-        print(f"  ✅ Created bucket with versioning")
+        print(f"  ✅ Created bucket")
     except s3_client.exceptions.BucketAlreadyOwnedByYou:
         print(f"  ℹ️  Bucket already exists")
     
@@ -204,16 +200,24 @@ def setup_child_account(config, child_id):
     if data_dir.exists():
         print(f"\n📤 Uploading data from {data_dir}")
         count = 0
-        for file_path in data_dir.glob("*"):
+        for file_path in data_dir.glob("*.json"):
             if file_path.is_file():
-                s3_client.upload_file(str(file_path), bucket_name, f"documents/{file_path.name}")
+                # Upload to data/ prefix for agent access
+                s3_key = f"data/{file_path.name}"
+                s3_client.upload_file(str(file_path), bucket_name, s3_key)
+                print(f"  ✅ Uploaded {file_path.name} to s3://{bucket_name}/{s3_key}")
                 count += 1
         print(f"  ✅ Uploaded {count} files")
+    else:
+        print(f"  ⚠️  Data directory not found: {data_dir}")
     
-    # Create IAM role
+    # Create IAM role for AgentCore (with S3 access)
     role_name = child['iam_role_name']
-    print(f"\n🔐 Creating IAM role: {role_name}")
+    agentcore_role_name = f"AgentCore{child['id'].replace('_', '').title()}Role"
     
+    print(f"\n🔐 Creating IAM roles...")
+    
+    # Role 1: Cross-account access role (for orchestrator)
     trust_policy = {
         "Version": "2012-10-17",
         "Statement": [{
@@ -242,18 +246,72 @@ def setup_child_account(config, child_id):
             MaxSessionDuration=3600
         )
         role_arn = response['Role']['Arn']
-        print(f"  ✅ Created role: {role_arn}")
+        print(f"  ✅ Created cross-account role: {role_arn}")
     except iam_client.exceptions.EntityAlreadyExistsException:
         response = iam_client.get_role(RoleName=role_name)
         role_arn = response['Role']['Arn']
-        print(f"  ℹ️  Role already exists: {role_arn}")
+        print(f"  ℹ️  Cross-account role already exists: {role_arn}")
     
     iam_client.put_role_policy(
         RoleName=role_name,
         PolicyName=f"{role_name}Policy",
         PolicyDocument=json.dumps(policy_document)
     )
-    print(f"  ✅ Attached inline policy")
+    
+    # Role 2: AgentCore execution role (with S3 + Bedrock access)
+    agentcore_trust_policy = {
+        "Version": "2012-10-17",
+        "Statement": [{
+            "Effect": "Allow",
+            "Principal": {"Service": "bedrock.amazonaws.com"},
+            "Action": "sts:AssumeRole"
+        }]
+    }
+    
+    agentcore_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Sid": "BedrockAccess",
+                "Effect": "Allow",
+                "Action": ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"],
+                "Resource": "arn:aws:bedrock:*::foundation-model/*"
+            },
+            {
+                "Sid": "S3DataAccess",
+                "Effect": "Allow",
+                "Action": ["s3:GetObject", "s3:ListBucket"],
+                "Resource": [f"arn:aws:s3:::{bucket_name}", f"arn:aws:s3:::{bucket_name}/*"]
+            },
+            {
+                "Sid": "CloudWatchLogs",
+                "Effect": "Allow",
+                "Action": ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"],
+                "Resource": "arn:aws:logs:*:*:*"
+            }
+        ]
+    }
+    
+    try:
+        response = iam_client.create_role(
+            RoleName=agentcore_role_name,
+            AssumeRolePolicyDocument=json.dumps(agentcore_trust_policy),
+            Description=f"AgentCore execution role for {child['name']}",
+            MaxSessionDuration=3600
+        )
+        agentcore_role_arn = response['Role']['Arn']
+        print(f"  ✅ Created AgentCore role: {agentcore_role_arn}")
+    except iam_client.exceptions.EntityAlreadyExistsException:
+        response = iam_client.get_role(RoleName=agentcore_role_name)
+        agentcore_role_arn = response['Role']['Arn']
+        print(f"  ℹ️  AgentCore role already exists: {agentcore_role_arn}")
+    
+    iam_client.put_role_policy(
+        RoleName=agentcore_role_name,
+        PolicyName=f"{agentcore_role_name}Policy",
+        PolicyDocument=json.dumps(agentcore_policy)
+    )
+    print(f"  ✅ Attached policies to both roles")
     
     # Save config
     output_config = {
@@ -264,6 +322,7 @@ def setup_child_account(config, child_id):
         "description": child['description'],
         "s3_bucket": bucket_name,
         "iam_role_arn": role_arn,
+        "agentcore_role_arn": agentcore_role_arn,
         "opensearch_collection_name": child['opensearch_collection_name']
     }
     
@@ -273,14 +332,15 @@ def setup_child_account(config, child_id):
     print(f"✅ {child['name']} Setup Complete!")
     print("=" * 70)
     print(f"📦 S3 Bucket: {bucket_name}")
-    print(f"🔐 Role: {role_arn}")
+    print(f"🔐 Cross-Account Role: {role_arn}")
+    print(f"🔐 AgentCore Role: {agentcore_role_arn}")
 
 def main():
     if len(sys.argv) < 2:
         print("Usage:")
         print("  python setup_accounts.py central              # Setup central account")
-        print("  python setup_accounts.py corporate_banking    # Setup Corporate Banking LOB")
-        print("  python setup_accounts.py treasury_risk        # Setup Treasury & Risk LOB")
+        print("  python setup_accounts.py corporate_banking    # Setup Corporate Banking LOB (creates S3 + uploads data)")
+        print("  python setup_accounts.py treasury_risk        # Setup Treasury & Risk LOB (creates S3 + uploads data)")
         print("  python setup_accounts.py all                  # Setup all accounts")
         sys.exit(1)
     

@@ -1,27 +1,27 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'BankIQ+ Frontend - CloudFront + S3 (Phase 4)'
+Description: 'LoanIQ Frontend - CloudFront + S3 (Private Bucket with OAC)'
 
 Parameters:
   ProjectName:
     Type: String
-    Default: bankiq
+    Default: loaniq
     Description: Project name for resource naming
-  
-  PrerequisitesStackName:
-    Type: String
-    Default: bankiq-prerequisites
-    Description: Name of the prerequisites stack
-  
-  BackendStackName:
-    Type: String
-    Default: bankiq-backend
-    Description: Name of the backend stack
 
 Resources:
-  # ============================================================================
-  # CLOUDFRONT ORIGIN ACCESS CONTROL
-  # ============================================================================
+  # S3 Bucket (Private)
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${ProjectName}-frontend-${AWS::AccountId}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
   
+  # CloudFront Origin Access Control
   CloudFrontOAC:
     Type: AWS::CloudFront::OriginAccessControl
     Properties:
@@ -30,16 +30,12 @@ Resources:
         OriginAccessControlOriginType: s3
         SigningBehavior: always
         SigningProtocol: sigv4
-
-  # ============================================================================
-  # S3 BUCKET POLICY
-  # ============================================================================
   
+  # S3 Bucket Policy (Only CloudFront can access)
   FrontendBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
-      Bucket:
-        Fn::ImportValue: !Sub '${PrerequisitesStackName}-FrontendBucket'
+      Bucket: !Ref FrontendBucket
       PolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -48,21 +44,12 @@ Resources:
             Principal:
               Service: cloudfront.amazonaws.com
             Action: s3:GetObject
-            Resource: !Sub
-              - '${BucketArn}/*'
-              - BucketArn:
-                  Fn::Sub:
-                    - 'arn:aws:s3:::${BucketName}'
-                    - BucketName:
-                        Fn::ImportValue: !Sub '${PrerequisitesStackName}-FrontendBucket'
+            Resource: !Sub '${FrontendBucket.Arn}/*'
             Condition:
               StringEquals:
                 AWS:SourceArn: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}'
-
-  # ============================================================================
-  # CLOUDFRONT DISTRIBUTION
-  # ============================================================================
   
+  # CloudFront Distribution
   CloudFrontDistribution:
     Type: AWS::CloudFront::Distribution
     Properties:
@@ -74,30 +61,11 @@ Resources:
         PriceClass: PriceClass_100
         
         Origins:
-          # S3 Origin for React app
           - Id: S3Origin
-            DomainName: !Sub
-              - '${BucketName}.s3.${AWS::Region}.amazonaws.com'
-              - BucketName:
-                  Fn::ImportValue: !Sub '${PrerequisitesStackName}-FrontendBucket'
+            DomainName: !GetAtt FrontendBucket.RegionalDomainName
             OriginAccessControlId: !Ref CloudFrontOAC
             S3OriginConfig:
               OriginAccessIdentity: ''
-          
-          # ALB Origin for backend API
-          - Id: ALBOrigin
-            DomainName:
-              Fn::ImportValue: !Sub '${BackendStackName}-ALBDnsName'
-            CustomOriginConfig:
-              HTTPPort: 80
-              OriginProtocolPolicy: http-only
-              OriginSSLProtocols:
-                - TLSv1.2
-              OriginReadTimeout: 60  # CloudFront max is 60 seconds (ALB handles longer timeouts)
-              OriginKeepaliveTimeout: 60
-            OriginCustomHeaders:
-              - HeaderName: X-Custom-Header
-                HeaderValue: !Sub '${ProjectName}-backend'
         
         DefaultCacheBehavior:
           TargetOriginId: S3Origin
@@ -113,39 +81,6 @@ Resources:
           CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6  # CachingOptimized
           OriginRequestPolicyId: 88a5eaf4-2fd4-4709-b370-b4c650ea3fcf  # CORS-S3Origin
         
-        CacheBehaviors:
-          # Backend API routes
-          - PathPattern: /api/*
-            TargetOriginId: ALBOrigin
-            ViewerProtocolPolicy: redirect-to-https
-            AllowedMethods:
-              - GET
-              - HEAD
-              - OPTIONS
-              - PUT
-              - POST
-              - PATCH
-              - DELETE
-            CachedMethods:
-              - GET
-              - HEAD
-            Compress: true
-            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad  # CachingDisabled
-            OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3  # AllViewer
-          
-          - PathPattern: /health
-            TargetOriginId: ALBOrigin
-            ViewerProtocolPolicy: redirect-to-https
-            AllowedMethods:
-              - GET
-              - HEAD
-            CachedMethods:
-              - GET
-              - HEAD
-            Compress: true
-            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad  # CachingDisabled
-            OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3  # AllViewer
-        
         CustomErrorResponses:
           - ErrorCode: 403
             ResponseCode: 200
@@ -157,11 +92,11 @@ Resources:
             ErrorCachingMinTTL: 300
 
 Outputs:
-  StackName:
-    Description: Stack name for cross-stack references
-    Value: !Ref AWS::StackName
+  FrontendBucket:
+    Description: S3 bucket for frontend
+    Value: !Ref FrontendBucket
     Export:
-      Name: !Sub '${AWS::StackName}-StackName'
+      Name: !Sub '${AWS::StackName}-FrontendBucket'
   
   CloudFrontDistributionId:
     Description: CloudFront distribution ID

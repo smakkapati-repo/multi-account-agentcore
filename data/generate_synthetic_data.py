@@ -7,6 +7,11 @@ Generate hybrid synthetic + real data for multi-account demo
 import json
 import random
 from datetime import datetime
+from pathlib import Path
+
+# Create data directories if they don't exist
+Path("data/corporate_banking").mkdir(parents=True, exist_ok=True)
+Path("data/treasury_risk").mkdir(parents=True, exist_ok=True)
 
 # Fortune 500 companies for synthetic customer profiles
 CORPORATE_CUSTOMERS = [
