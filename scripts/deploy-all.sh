@@ -72,11 +72,13 @@ print_info() {
 confirm() {
     echo -e "${YELLOW}$1 (y/n)${NC} "
     read -r response
-    if [[ ! "$response" =~ ^[Yy]$ ]]; then
+    response=$(echo "$response" | tr -d '\r\n' | xargs)
+    if [[ "$response" =~ ^[Yy]$ ]]; then
+        return 0
+    else
         print_warning "Skipped by user"
         return 1
     fi
-    return 0
 }
 
 # Check prerequisites
