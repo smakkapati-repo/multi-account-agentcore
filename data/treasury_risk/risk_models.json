@@ -3,7 +3,7 @@
   "account_id": "058264155998",
   "description": "Treasury positions and risk models",
   "data_source": "Hybrid: Real FRED/Treasury rates + Synthetic risk models",
-  "generated_at": "2026-01-31T15:22:33.411827",
+  "generated_at": "2026-01-31T20:09:47.423302",
   "market_data": {
     "treasury_10y_yield": 4.25,
     "treasury_2y_yield": 4.15,
@@ -18,45 +18,45 @@
       "risk_models": [
         {
           "industry": "Technology",
-          "probability_of_default_pct": 3.14,
-          "loss_given_default_pct": 59.95,
-          "expected_loss_pct": 1.88,
-          "rating_equivalent": "AAA"
+          "probability_of_default_pct": 2.78,
+          "loss_given_default_pct": 46.67,
+          "expected_loss_pct": 1.3,
+          "rating_equivalent": "A+"
         },
         {
           "industry": "Healthcare",
-          "probability_of_default_pct": 3.28,
-          "loss_given_default_pct": 54.87,
-          "expected_loss_pct": 1.8,
-          "rating_equivalent": "A-"
+          "probability_of_default_pct": 2.86,
+          "loss_given_default_pct": 58.2,
+          "expected_loss_pct": 1.66,
+          "rating_equivalent": "BBB"
         },
         {
           "industry": "Energy",
-          "probability_of_default_pct": 2.82,
-          "loss_given_default_pct": 40.11,
-          "expected_loss_pct": 1.13,
-          "rating_equivalent": "AAA"
+          "probability_of_default_pct": 1.27,
+          "loss_given_default_pct": 33.47,
+          "expected_loss_pct": 0.43,
+          "rating_equivalent": "A"
         },
         {
           "industry": "Retail",
-          "probability_of_default_pct": 2.76,
-          "loss_given_default_pct": 43.66,
-          "expected_loss_pct": 1.21,
-          "rating_equivalent": "AA-"
+          "probability_of_default_pct": 1.36,
+          "loss_given_default_pct": 43.36,
+          "expected_loss_pct": 0.59,
+          "rating_equivalent": "BBB"
         },
         {
           "industry": "Financial Services",
-          "probability_of_default_pct": 0.65,
-          "loss_given_default_pct": 33.15,
-          "expected_loss_pct": 0.22,
-          "rating_equivalent": "BBB+"
+          "probability_of_default_pct": 2.43,
+          "loss_given_default_pct": 57.8,
+          "expected_loss_pct": 1.4,
+          "rating_equivalent": "A+"
         }
       ],
       "data_source_risk_models": "Synthetic (Demo purposes)",
       "capital_ratios": {
-        "tier1_capital_ratio": 12.62,
-        "total_capital_ratio": 16.54,
-        "leverage_ratio": 8.87,
+        "tier1_capital_ratio": 14.33,
+        "total_capital_ratio": 15.47,
+        "leverage_ratio": 9.25,
         "data_source": "FDIC Risk Metrics (Real - use live API)"
       }
     },
@@ -66,45 +66,45 @@
       "risk_models": [
         {
           "industry": "Technology",
-          "probability_of_default_pct": 3.1,
-          "loss_given_default_pct": 44.69,
-          "expected_loss_pct": 1.39,
-          "rating_equivalent": "AAA"
+          "probability_of_default_pct": 4.12,
+          "loss_given_default_pct": 51.09,
+          "expected_loss_pct": 2.1,
+          "rating_equivalent": "BBB"
         },
         {
           "industry": "Healthcare",
-          "probability_of_default_pct": 3.8,
-          "loss_given_default_pct": 50.76,
-          "expected_loss_pct": 1.93,
-          "rating_equivalent": "AAA"
+          "probability_of_default_pct": 1.59,
+          "loss_given_default_pct": 57.63,
+          "expected_loss_pct": 0.92,
+          "rating_equivalent": "AA-"
         },
         {
           "industry": "Energy",
-          "probability_of_default_pct": 2.23,
-          "loss_given_default_pct": 45.96,
-          "expected_loss_pct": 1.02,
-          "rating_equivalent": "AAA"
+          "probability_of_default_pct": 0.89,
+          "loss_given_default_pct": 40.88,
+          "expected_loss_pct": 0.36,
+          "rating_equivalent": "BBB"
         },
         {
           "industry": "Retail",
-          "probability_of_default_pct": 4.65,
-          "loss_given_default_pct": 53.74,
-          "expected_loss_pct": 2.5,
-          "rating_equivalent": "AA+"
+          "probability_of_default_pct": 3.66,
+          "loss_given_default_pct": 40.06,
+          "expected_loss_pct": 1.47,
+          "rating_equivalent": "A+"
         },
         {
           "industry": "Financial Services",
-          "probability_of_default_pct": 3.57,
-          "loss_given_default_pct": 47.17,
-          "expected_loss_pct": 1.68,
-          "rating_equivalent": "AA-"
+          "probability_of_default_pct": 1.32,
+          "loss_given_default_pct": 32.24,
+          "expected_loss_pct": 0.43,
+          "rating_equivalent": "AA"
         }
       ],
       "data_source_risk_models": "Synthetic (Demo purposes)",
       "capital_ratios": {
-        "tier1_capital_ratio": 13.72,
-        "total_capital_ratio": 17.77,
-        "leverage_ratio": 11.0,
+        "tier1_capital_ratio": 13.6,
+        "total_capital_ratio": 15.43,
+        "leverage_ratio": 8.02,
         "data_source": "FDIC Risk Metrics (Real - use live API)"
       }
     },
@@ -114,45 +114,45 @@
       "risk_models": [
         {
           "industry": "Technology",
-          "probability_of_default_pct": 1.63,
-          "loss_given_default_pct": 53.66,
-          "expected_loss_pct": 0.87,
-          "rating_equivalent": "AA+"
+          "probability_of_default_pct": 4.29,
+          "loss_given_default_pct": 54.77,
+          "expected_loss_pct": 2.35,
+          "rating_equivalent": "AAA"
         },
         {
           "industry": "Healthcare",
-          "probability_of_default_pct": 3.79,
-          "loss_given_default_pct": 59.77,
-          "expected_loss_pct": 2.27,
-          "rating_equivalent": "A-"
-        },
-        {
-          "industry": "Energy",
-          "probability_of_default_pct": 3.69,
-          "loss_given_default_pct": 31.11,
-          "expected_loss_pct": 1.15,
+          "probability_of_default_pct": 4.01,
+          "loss_given_default_pct": 40.91,
+          "expected_loss_pct": 1.64,
           "rating_equivalent": "A"
         },
         {
+          "industry": "Energy",
+          "probability_of_default_pct": 2.09,
+          "loss_given_default_pct": 43.12,
+          "expected_loss_pct": 0.9,
+          "rating_equivalent": "AAA"
+        },
+        {
           "industry": "Retail",
-          "probability_of_default_pct": 0.84,
-          "loss_given_default_pct": 41.74,
-          "expected_loss_pct": 0.35,
+          "probability_of_default_pct": 3.27,
+          "loss_given_default_pct": 41.88,
+          "expected_loss_pct": 1.37,
           "rating_equivalent": "A-"
         },
         {
           "industry": "Financial Services",
-          "probability_of_default_pct": 3.09,
-          "loss_given_default_pct": 34.29,
-          "expected_loss_pct": 1.06,
-          "rating_equivalent": "AA+"
+          "probability_of_default_pct": 1.33,
+          "loss_given_default_pct": 43.49,
+          "expected_loss_pct": 0.58,
+          "rating_equivalent": "AA"
         }
       ],
       "data_source_risk_models": "Synthetic (Demo purposes)",
       "capital_ratios": {
-        "tier1_capital_ratio": 12.73,
-        "total_capital_ratio": 15.68,
-        "leverage_ratio": 8.5,
+        "tier1_capital_ratio": 12.37,
+        "total_capital_ratio": 17.23,
+        "leverage_ratio": 10.07,
         "data_source": "FDIC Risk Metrics (Real - use live API)"
       }
     }

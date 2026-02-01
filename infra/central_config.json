@@ -1,0 +1,21 @@
+{
+  "account_id": "164543933824",
+  "profile": "default",
+  "region": "us-east-1",
+  "agentcore_role_arn": "arn:aws:iam::164543933824:role/AgentCoreMultiAccountRole",
+  "s3_bucket": "agentcore-multiaccountpoc-164543933824",
+  "children": [
+    {
+      "id": "corporate_banking",
+      "account_id": "891377397197",
+      "name": "Corporate Banking LOB",
+      "role_arn": "arn:aws:iam::891377397197:role/CentralAccountAccessRole"
+    },
+    {
+      "id": "treasury_risk",
+      "account_id": "058264155998",
+      "name": "Treasury & Risk LOB",
+      "role_arn": "arn:aws:iam::058264155998:role/CentralAccountAccessRole"
+    }
+  ]
+}

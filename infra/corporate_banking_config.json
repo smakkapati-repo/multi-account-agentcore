@@ -1,0 +1,11 @@
+{
+  "id": "corporate_banking",
+  "account_id": "891377397197",
+  "profile": "child1",
+  "name": "Corporate Banking LOB",
+  "description": "Corporate customer relationships and loan exposure (JPMorgan, Bank of America, Citigroup)",
+  "s3_bucket": "corporate-banking-891377397197",
+  "iam_role_arn": "arn:aws:iam::891377397197:role/CentralAccountAccessRole",
+  "agentcore_role_arn": "arn:aws:iam::891377397197:role/AgentCoreCorporatebankingRole",
+  "opensearch_collection_name": "corporate-banking-kb"
+}
