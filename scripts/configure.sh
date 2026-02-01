@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+# Get the directory where the script is located
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+# Change to project root (parent of scripts directory)
+cd "$SCRIPT_DIR/.."
+
 # Colors
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'

@@ -219,7 +219,7 @@ deploy_lob_agents() {
         
         print_step "Launching agent..."
         AWS_PROFILE=$CORP_PROFILE agentcore launch
-        CORP_AGENT_ARN=$(AWS_PROFILE=$CORP_PROFILE agentcore status | grep "agent_arn" | cut -d'"' -f4 || echo "")
+        CORP_AGENT_ARN=$(AWS_PROFILE=$CORP_PROFILE agentcore status 2>/dev/null | grep "bedrock-agentcore" | grep -oE "arn:aws:bedrock-agentcore:[^│]+" | head -1)
         cd ../..
         print_success "Corporate Banking Agent deployed"
         print_info "Agent ARN: $CORP_AGENT_ARN"
@@ -242,7 +242,7 @@ deploy_lob_agents() {
         
         print_step "Launching agent..."
         AWS_PROFILE=$RISK_PROFILE agentcore launch
-        RISK_AGENT_ARN=$(AWS_PROFILE=$RISK_PROFILE agentcore status | grep "agent_arn" | cut -d'"' -f4 || echo "")
+        RISK_AGENT_ARN=$(AWS_PROFILE=$RISK_PROFILE agentcore status 2>/dev/null | grep "bedrock-agentcore" | grep -oE "arn:aws:bedrock-agentcore:[^│]+" | head -1)
         cd ../..
         print_success "Treasury & Risk Agent deployed"
         print_info "Agent ARN: $RISK_AGENT_ARN"
@@ -471,7 +471,7 @@ main() {
     # Check if accounts_config.json exists, if not run configuration
     if [ ! -f "infra/accounts_config.json" ]; then
         print_warning "Configuration file not found. Running initial setup..."
-        ./configure.sh
+        ./scripts/configure.sh
         if [ $? -ne 0 ]; then
             print_error "Configuration failed. Please fix errors and try again."
             exit 1
@@ -479,7 +479,7 @@ main() {
     else
         print_info "Using existing configuration from infra/accounts_config.json"
         if confirm "Do you want to reconfigure accounts?"; then
-            ./configure.sh
+            ./scripts/configure.sh
         fi
     fi
     
