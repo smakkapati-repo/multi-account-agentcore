@@ -282,6 +282,18 @@ def setup_child_account(config, child_id):
                 "Resource": "arn:aws:bedrock:*::foundation-model/*"
             },
             {
+                "Sid": "BedrockAgentMemory",
+                "Effect": "Allow",
+                "Action": [
+                    "bedrock:CreateMemory",
+                    "bedrock:GetMemory",
+                    "bedrock:UpdateMemory",
+                    "bedrock:DeleteMemory",
+                    "bedrock:ListMemories"
+                ],
+                "Resource": "*"
+            },
+            {
                 "Sid": "S3DataAccess",
                 "Effect": "Allow",
                 "Action": ["s3:GetObject", "s3:ListBucket"],
