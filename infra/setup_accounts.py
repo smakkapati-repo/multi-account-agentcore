@@ -207,9 +207,13 @@ def setup_child_account(config, child_id):
                 s3_client.upload_file(str(file_path), bucket_name, s3_key)
                 print(f"  ✅ Uploaded {file_path.name} to s3://{bucket_name}/{s3_key}")
                 count += 1
-        print(f"  ✅ Uploaded {count} files")
+        if count > 0:
+            print(f"  ✅ Uploaded {count} files")
+        else:
+            print(f"  ⚠️  No JSON files found in {data_dir}")
     else:
         print(f"  ⚠️  Data directory not found: {data_dir}")
+        print(f"  💡 Run: python3 data/generate_synthetic_data.py")
     
     # Create IAM role for AgentCore (with S3 access)
     role_name = child['iam_role_name']

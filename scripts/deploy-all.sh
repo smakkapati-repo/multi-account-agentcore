@@ -121,6 +121,17 @@ check_prerequisites() {
         all_good=false
     fi
     
+    # Check Bedrock model access
+    print_step "Checking Bedrock model access..."
+    print_info "Verifying Claude Sonnet 4.5 access in all accounts..."
+    
+    if aws bedrock list-foundation-models --region us-east-1 --profile default 2>/dev/null | grep -q "anthropic.claude-sonnet-4"; then
+        print_success "Bedrock accessible in central account"
+    else
+        print_warning "Cannot verify Bedrock access in central account"
+        print_info "Ensure Claude Sonnet 4.5 is enabled: AWS Console → Bedrock → Model access"
+    fi
+    
     # Check AWS profiles
     print_step "Checking AWS profiles..."
     if aws configure list --profile default &> /dev/null; then
@@ -153,6 +164,11 @@ check_prerequisites() {
 setup_infrastructure() {
     print_section "${PACKAGE} Phase 1: Infrastructure Setup (S3 + IAM + Data)"
     
+    # Load config
+    CENTRAL_ACCOUNT=$(python3 -c "import json; print(json.load(open('infra/accounts_config.json'))['central']['account_id'])")
+    CORP_ACCOUNT=$(python3 -c "import json; print(json.load(open('infra/accounts_config.json'))['children'][0]['account_id'])")
+    RISK_ACCOUNT=$(python3 -c "import json; print(json.load(open('infra/accounts_config.json'))['children'][1]['account_id'])")
+    
     # Generate synthetic data first
     print_step "Generating synthetic data..."
     python3 data/generate_synthetic_data.py
@@ -160,15 +176,15 @@ setup_infrastructure() {
     print_info "Created: customer_loans.json, risk_models.json"
     
     if confirm "Setup infrastructure in all 3 AWS accounts?"; then
-        print_step "Setting up Central Account (164543933824)..."
+        print_step "Setting up Central Account ($CENTRAL_ACCOUNT)..."
         python3 infra/setup_accounts.py central
         print_success "Central account setup complete"
         
-        print_step "Setting up Corporate Banking LOB (891377397197)..."
+        print_step "Setting up Corporate Banking LOB ($CORP_ACCOUNT)..."
         python3 infra/setup_accounts.py corporate_banking
         print_success "Corporate Banking LOB setup complete"
         
-        print_step "Setting up Treasury & Risk LOB (058264155998)..."
+        print_step "Setting up Treasury & Risk LOB ($RISK_ACCOUNT)..."
         python3 infra/setup_accounts.py treasury_risk
         print_success "Treasury & Risk LOB setup complete"
         
@@ -181,11 +197,17 @@ setup_infrastructure() {
 deploy_lob_agents() {
     print_section "${ROCKET} Phase 2: Deploy LOB Agents (MCP Servers)"
     
+    # Load config
+    CORP_ACCOUNT=$(python3 -c "import json; print(json.load(open('infra/accounts_config.json'))['children'][0]['account_id'])")
+    CORP_PROFILE=$(python3 -c "import json; print(json.load(open('infra/accounts_config.json'))['children'][0]['profile'])")
+    RISK_ACCOUNT=$(python3 -c "import json; print(json.load(open('infra/accounts_config.json'))['children'][1]['account_id'])")
+    RISK_PROFILE=$(python3 -c "import json; print(json.load(open('infra/accounts_config.json'))['children'][1]['profile'])")
+    
     if confirm "Deploy Corporate Banking Agent?"; then
-        print_step "Deploying Corporate Banking Agent to account 891377397197..."
+        print_step "Deploying Corporate Banking Agent to account $CORP_ACCOUNT..."
         cd agents/agent-corporate-banking
-        AWS_PROFILE=child1 agentcore launch
-        CORP_AGENT_ARN=$(AWS_PROFILE=child1 agentcore status | grep "agent_arn" | cut -d'"' -f4 || echo "")
+        AWS_PROFILE=$CORP_PROFILE agentcore launch
+        CORP_AGENT_ARN=$(AWS_PROFILE=$CORP_PROFILE agentcore status | grep "agent_arn" | cut -d'"' -f4 || echo "")
         cd ../..
         print_success "Corporate Banking Agent deployed"
         print_info "Agent ARN: $CORP_AGENT_ARN"
@@ -193,10 +215,10 @@ deploy_lob_agents() {
     fi
     
     if confirm "Deploy Treasury & Risk Agent?"; then
-        print_step "Deploying Treasury & Risk Agent to account 058264155998..."
+        print_step "Deploying Treasury & Risk Agent to account $RISK_ACCOUNT..."
         cd agents/agent-treasury-risk
-        AWS_PROFILE=child2-demo agentcore launch
-        RISK_AGENT_ARN=$(AWS_PROFILE=child2-demo agentcore status | grep "agent_arn" | cut -d'"' -f4 || echo "")
+        AWS_PROFILE=$RISK_PROFILE agentcore launch
+        RISK_AGENT_ARN=$(AWS_PROFILE=$RISK_PROFILE agentcore status | grep "agent_arn" | cut -d'"' -f4 || echo "")
         cd ../..
         print_success "Treasury & Risk Agent deployed"
         print_info "Agent ARN: $RISK_AGENT_ARN"
@@ -208,21 +230,42 @@ deploy_lob_agents() {
 deploy_orchestrator() {
     print_section "${CLOUD} Phase 3: Deploy Orchestrator + Gateway (MCP Client)"
     
+    # Load config
+    CORP_ACCOUNT=$(python3 -c "import json; print(json.load(open('infra/accounts_config.json'))['children'][0]['account_id'])")
+    RISK_ACCOUNT=$(python3 -c "import json; print(json.load(open('infra/accounts_config.json'))['children'][1]['account_id'])")
+    
     if confirm "Deploy Orchestrator Agent with Gateway?"; then
         # Set environment variables for LOB agent ARNs
         if [ -f .corp_agent_arn ]; then
             export CORPORATE_BANKING_AGENT_ARN=$(cat .corp_agent_arn)
             print_info "Using Corporate Banking Agent ARN: $CORPORATE_BANKING_AGENT_ARN"
+        else
+            print_warning "Corporate Banking Agent ARN not found. Deploy LOB agents first."
+            return
         fi
         
         if [ -f .risk_agent_arn ]; then
             export TREASURY_RISK_AGENT_ARN=$(cat .risk_agent_arn)
             print_info "Using Treasury & Risk Agent ARN: $TREASURY_RISK_AGENT_ARN"
+        else
+            print_warning "Treasury & Risk Agent ARN not found. Deploy LOB agents first."
+            return
         fi
+        
+        # Update agentcore.yaml with actual ARNs and account IDs
+        print_step "Configuring orchestrator with LOB agent ARNs..."
+        cd agents/agent-orchestrator
+        sed -i.bak "s/account_id: \"891377397197\"/account_id: \"$CORP_ACCOUNT\"/g" agentcore.yaml
+        sed -i.bak "s/account_id: \"058264155998\"/account_id: \"$RISK_ACCOUNT\"/g" agentcore.yaml
+        sed -i.bak "s|\${CORPORATE_BANKING_AGENT_ARN}|$CORPORATE_BANKING_AGENT_ARN|g" agentcore.yaml
+        sed -i.bak "s|\${TREASURY_RISK_AGENT_ARN}|$TREASURY_RISK_AGENT_ARN|g" agentcore.yaml
+        rm -f agentcore.yaml.bak
+        cd ../..
+        print_success "Configuration updated"
         
         print_step "Deploying Orchestrator Agent to central account..."
         cd agents/agent-orchestrator
-        agentcore launch
+        CORPORATE_BANKING_AGENT_ARN=$CORPORATE_BANKING_AGENT_ARN TREASURY_RISK_AGENT_ARN=$TREASURY_RISK_AGENT_ARN agentcore launch
         print_success "Orchestrator Agent deployed"
         
         print_step "Deploying AgentCore Gateway..."
@@ -239,6 +282,13 @@ deploy_orchestrator() {
 deploy_frontend() {
     print_section "${GLOBE} Phase 4: Deploy Frontend (CloudFront + S3)"
     
+    if ! [ -f .gateway_url ]; then
+        print_warning "Gateway URL not found. Deploy gateway first (Phase 3)."
+        if ! confirm "Continue without gateway URL?"; then
+            return
+        fi
+    fi
+    
     if confirm "Deploy CloudFront + S3 infrastructure?"; then
         print_step "Deploying CloudFormation stack..."
         aws cloudformation deploy \
@@ -254,40 +304,40 @@ deploy_frontend() {
         
         print_info "CloudFront URL: $CLOUDFRONT_URL"
         print_info "S3 Bucket: $S3_BUCKET (private)"
+        echo "$CLOUDFRONT_URL" > .cloudfront_url
     fi
     
-    if [ ! -f .gateway_url ]; then
-        print_warning "Gateway URL not found. Skipping frontend build."
-        print_info "Deploy gateway first, then run this script again."
-        return
-    fi
-    
-    GATEWAY_URL=$(cat .gateway_url)
-    
-    if confirm "Build and deploy React app?"; then
-        print_step "Installing frontend dependencies..."
-        cd frontend
-        if [ ! -d "node_modules" ]; then
-            npm install
-            print_success "Dependencies installed"
-        else
-            print_info "Dependencies already installed"
+    if [ -f .gateway_url ]; then
+        GATEWAY_URL=$(cat .gateway_url)
+        
+        if confirm "Build and deploy React app?"; then
+            print_step "Installing frontend dependencies..."
+            cd frontend
+            if [ ! -d "node_modules" ]; then
+                npm install
+                print_success "Dependencies installed"
+            else
+                print_info "Dependencies already installed"
+            fi
+            
+            print_step "Configuring Gateway URL..."
+            echo "REACT_APP_GATEWAY_URL=$GATEWAY_URL" > .env
+            cd ..
+            print_success "Gateway URL configured"
+            
+            print_step "Building React app..."
+            cd frontend
+            npm run build
+            cd ..
+            print_success "React app built"
+            
+            print_step "Deploying to CloudFront..."
+            ./scripts/deploy-frontend.sh
+            print_success "Frontend deployed"
         fi
-        
-        print_step "Configuring Gateway URL..."
-        echo "REACT_APP_GATEWAY_URL=$GATEWAY_URL" > .env
-        cd ..
-        print_success "Gateway URL configured"
-        
-        print_step "Building React app..."
-        cd frontend
-        npm run build
-        cd ..
-        print_success "React app built"
-        
-        print_step "Deploying to CloudFront..."
-        ./deploy-frontend.sh
-        print_success "Frontend deployed"
+    else
+        print_warning "Gateway URL not found. Skipping React app build."
+        print_info "Deploy gateway first, then run: ./scripts/deploy-frontend.sh"
     fi
 }
 
@@ -295,28 +345,37 @@ deploy_frontend() {
 print_summary() {
     print_section "${SPARKLES} Deployment Summary"
     
+    # Load config
+    CENTRAL_ACCOUNT=$(python3 -c "import json; print(json.load(open('infra/accounts_config.json'))['central']['account_id'])" 2>/dev/null || echo "N/A")
+    CORP_ACCOUNT=$(python3 -c "import json; print(json.load(open('infra/accounts_config.json'))['children'][0]['account_id'])" 2>/dev/null || echo "N/A")
+    RISK_ACCOUNT=$(python3 -c "import json; print(json.load(open('infra/accounts_config.json'))['children'][1]['account_id'])" 2>/dev/null || echo "N/A")
+    
     echo -e "${WHITE}Accounts:${NC}"
-    echo -e "  ${CYAN}Central (164543933824)${NC}"
+    echo -e "  ${CYAN}Central ($CENTRAL_ACCOUNT)${NC}"
     if [ -f .gateway_url ]; then
         echo -e "    ${GREEN}${CHECK} Orchestrator Agent${NC}"
         echo -e "    ${GREEN}${CHECK} Gateway: $(cat .gateway_url)${NC}"
     fi
     
-    echo -e "  ${CYAN}Corporate Banking (891377397197)${NC}"
+    echo -e "  ${CYAN}Corporate Banking ($CORP_ACCOUNT)${NC}"
     if [ -f .corp_agent_arn ]; then
         echo -e "    ${GREEN}${CHECK} MCP Agent${NC}"
-        echo -e "    ${GREEN}${CHECK} S3: s3://corporate-banking-891377397197${NC}"
+        echo -e "    ${GREEN}${CHECK} S3: s3://corporate-banking-$CORP_ACCOUNT${NC}"
     fi
     
-    echo -e "  ${CYAN}Treasury & Risk (058264155998)${NC}"
+    echo -e "  ${CYAN}Treasury & Risk ($RISK_ACCOUNT)${NC}"
     if [ -f .risk_agent_arn ]; then
         echo -e "    ${GREEN}${CHECK} MCP Agent${NC}"
-        echo -e "    ${GREEN}${CHECK} S3: s3://treasury-risk-058264155998${NC}"
+        echo -e "    ${GREEN}${CHECK} S3: s3://treasury-risk-$RISK_ACCOUNT${NC}"
     fi
     
     echo ""
     echo -e "${WHITE}Frontend:${NC}"
-    echo -e "  ${GREEN}${CHECK} CloudFront: https://d3ips4uebwo7az.cloudfront.net${NC}"
+    if [ -f .cloudfront_url ]; then
+        echo -e "  ${GREEN}${CHECK} CloudFront: $(cat .cloudfront_url)${NC}"
+    else
+        echo -e "  ${YELLOW}⚠️  Frontend not deployed${NC}"
+    fi
     
     echo ""
     echo -e "${GREEN}${SPARKLES} Deployment Complete! ${SPARKLES}${NC}"

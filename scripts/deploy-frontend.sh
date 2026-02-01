@@ -7,8 +7,7 @@ echo "=========================================="
 echo ""
 
 # Get CloudFront distribution ID and S3 bucket
-STACK_NAME="bankiq-frontend"
-PREREQ_STACK="bankiq-prerequisites"
+STACK_NAME="loaniq-frontend"
 
 echo "📋 Getting infrastructure details..."
 DISTRIBUTION_ID=$(aws cloudformation describe-stacks \
@@ -17,13 +16,13 @@ DISTRIBUTION_ID=$(aws cloudformation describe-stacks \
   --output text 2>/dev/null || echo "")
 
 S3_BUCKET=$(aws cloudformation describe-stacks \
-  --stack-name $PREREQ_STACK \
+  --stack-name $STACK_NAME \
   --query "Stacks[0].Outputs[?OutputKey=='FrontendBucket'].OutputValue" \
   --output text 2>/dev/null || echo "")
 
 if [ -z "$DISTRIBUTION_ID" ] || [ -z "$S3_BUCKET" ]; then
   echo "❌ Could not find CloudFront distribution or S3 bucket"
-  echo "   Make sure stacks are deployed: $STACK_NAME, $PREREQ_STACK"
+  echo "   Make sure stack is deployed: $STACK_NAME"
   exit 1
 fi
 

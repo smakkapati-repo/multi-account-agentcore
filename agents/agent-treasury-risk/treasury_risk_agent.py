@@ -25,8 +25,6 @@ def load_data_from_s3():
 
 RISK_DATA = load_data_from_s3()
 
-s3 = boto3.client('s3')
-
 @tool
 def query_risk_models(bank_name: str = None, industry: str = None) -> str:
     """Query risk models (PD, LGD, Expected Loss) by bank and industry.

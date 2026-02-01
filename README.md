@@ -130,10 +130,10 @@ For production deployments, integrate with your enterprise's existing data provi
 - **[Claude Sonnet 4.5](https://www.anthropic.com/claude)** - Foundation model
 
 ### Application Stack
-- **Authentication**: [AWS Cognito](https://docs.aws.amazon.com/cognito/) + OAuth 2.0 + JWT
-- **Backend**: [Express.js](https://expressjs.com/) (Node.js) + Python agent
+- **Authentication**: [AWS Cognito](https://docs.aws.amazon.com/cognito/) + OAuth 2.0 + JWT (optional)
+- **Backend**: AgentCore Gateway (serverless API)
 - **Frontend**: [React](https://react.dev/) + [Material-UI](https://mui.com/)
-- **Infrastructure**: [ECS Fargate](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/AWS_Fargate.html), [ALB](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/), [CloudFront](https://docs.aws.amazon.com/cloudfront/), [S3](https://docs.aws.amazon.com/s3/)
+- **Infrastructure**: AgentCore (serverless), [CloudFront](https://docs.aws.amazon.com/cloudfront/), [S3](https://docs.aws.amazon.com/s3/)
 
 ## 📚 Documentation
 
@@ -187,7 +187,7 @@ cd Centralized-Amazon-Bedrock-AgentCore-with-Distributed-MCP-Data-Sources
 ```
 
 On first run, the script will:
-1. ✅ Prompt for your 3 AWS account IDs and CLI profiles
+1. ✅ Prompt for your 3 AWS account IDs and CLI profiles (one-time configuration)
 2. ✅ Verify each account and save configuration
 3. ✅ Generate synthetic data automatically
 4. ✅ Create S3 buckets and IAM roles
@@ -207,32 +207,44 @@ On first run, the script will:
 Monthly costs for 24/7 operation:
 
 **Central Account (Hub):**
-- ECS Fargate (Backend): $15-20
-- ALB: $16-20
-- CloudFront: $1-5
-- S3 (Frontend): $1-2
-- Bedrock (Orchestrator Agent): $10-20
-- **Subtotal**: ~$43-67/month
+- Bedrock (Orchestrator Agent): $10-20 (pay per request)
+- AgentCore Gateway: $5-10
+- S3 (Agent artifacts): $1-2
+- CloudWatch Logs: $1-2
+- **Subtotal**: ~$17-34/month
 
 **LOB Accounts (2 accounts):**
-- Bedrock (MCP Agents): $5-10 per account
+- Bedrock (MCP Agents): $5-10 per account (pay per request)
 - S3 (Data Storage): $1-2 per account
 - IAM Roles: Free
 - **Subtotal**: ~$12-24/month (both accounts)
 
-**Total Estimated Cost**: ~$55-90/month
+**Frontend (Central Account):**
+- CloudFront: $1-5
+- S3 (Static hosting): $1-2
+- **Subtotal**: ~$2-7/month
+
+**Total Estimated Cost**: ~$31-65/month
 
 **Cost Optimization:**
-- Stop ECS tasks when not in use: ~$20-30/month
-- Use Bedrock on-demand pricing (pay per request)
+- Bedrock uses on-demand pricing (pay per request only)
+- No ECS/Fargate costs (AgentCore is serverless)
 - Delete after demo: $0
+- Stop using when not needed: ~$5-10/month (storage only)
 
 ## 🧹 Cleanup
 
 ```bash
-cd multi-account-agentcore
-./scripts/cleanup.sh
+cd Centralized-Amazon-Bedrock-AgentCore-with-Distributed-MCP-Data-Sources
+./scripts/cleanup-all.sh
 ```
+
+This will delete:
+- All AgentCore agents (orchestrator + LOB agents)
+- S3 buckets in all 3 accounts
+- IAM roles in all 3 accounts
+- CloudFront distribution and frontend
+- Local temporary files (.corp_agent_arn, .gateway_url, etc.)
 
 ## 📄 License
 
