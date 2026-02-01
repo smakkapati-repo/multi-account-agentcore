@@ -211,7 +211,11 @@ deploy_lob_agents() {
         if [ ! -f .bedrock_agentcore.yaml ]; then
             print_step "Configuring agent..."
             AGENTCORE_ROLE_ARN="arn:aws:iam::$CORP_ACCOUNT:role/AgentCoreCorporatebankingRole"
-            echo "" | AWS_PROFILE=$CORP_PROFILE agentcore configure --entrypoint corporate_banking_agent.py --execution-role $AGENTCORE_ROLE_ARN
+            AWS_PROFILE=$CORP_PROFILE agentcore configure \
+                --entrypoint corporate_banking_agent.py \
+                --execution-role $AGENTCORE_ROLE_ARN \
+                --requirements-file requirements.txt \
+                --non-interactive
             print_success "Agent configured"
         fi
         
@@ -231,7 +235,11 @@ deploy_lob_agents() {
         if [ ! -f .bedrock_agentcore.yaml ]; then
             print_step "Configuring agent..."
             AGENTCORE_ROLE_ARN="arn:aws:iam::$RISK_ACCOUNT:role/AgentCoreTreasuryriskRole"
-            echo "" | AWS_PROFILE=$RISK_PROFILE agentcore configure --entrypoint treasury_risk_agent.py --execution-role $AGENTCORE_ROLE_ARN
+            AWS_PROFILE=$RISK_PROFILE agentcore configure \
+                --entrypoint treasury_risk_agent.py \
+                --execution-role $AGENTCORE_ROLE_ARN \
+                --requirements-file requirements.txt \
+                --non-interactive
             print_success "Agent configured"
         fi
         
@@ -286,7 +294,11 @@ deploy_orchestrator() {
         cd agents/agent-orchestrator
         if [ ! -f .bedrock_agentcore.yaml ]; then
             AGENTCORE_ROLE_ARN="arn:aws:iam::$CENTRAL_ACCOUNT:role/AgentCoreMultiAccountRole"
-            echo "" | agentcore configure --entrypoint orchestrator_agent.py --execution-role $AGENTCORE_ROLE_ARN
+            agentcore configure \
+                --entrypoint orchestrator_agent.py \
+                --execution-role $AGENTCORE_ROLE_ARN \
+                --requirements-file requirements.txt \
+                --non-interactive
             print_success "Agent configured"
         fi
         
