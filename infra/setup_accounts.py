@@ -215,13 +215,12 @@ def setup_child_account(config, child_id):
         print(f"  ⚠️  Data directory not found: {data_dir}")
         print(f"  💡 Run: python3 data/generate_synthetic_data.py")
     
-    # Create IAM role for AgentCore (with S3 access)
+    # Create IAM role for cross-account access only
     role_name = child['iam_role_name']
-    agentcore_role_name = f"AgentCore{child['id'].replace('_', '').title()}Role"
     
-    print(f"\n🔐 Creating IAM roles...")
+    print(f"\n🔐 Creating IAM role...")
     
-    # Role 1: Cross-account access role (for orchestrator)
+    # Cross-account access role (for orchestrator)
     trust_policy = {
         "Version": "2012-10-17",
         "Statement": [{
@@ -261,78 +260,7 @@ def setup_child_account(config, child_id):
         PolicyName=f"{role_name}Policy",
         PolicyDocument=json.dumps(policy_document)
     )
-    
-    # Role 2: AgentCore execution role (with S3 + Bedrock access)
-    agentcore_trust_policy = {
-        "Version": "2012-10-17",
-        "Statement": [{
-            "Effect": "Allow",
-            "Principal": {"Service": "bedrock.amazonaws.com"},
-            "Action": "sts:AssumeRole"
-        }]
-    }
-    
-    agentcore_policy = {
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Sid": "BedrockAccess",
-                "Effect": "Allow",
-                "Action": ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"],
-                "Resource": "arn:aws:bedrock:*::foundation-model/*"
-            },
-            {
-                "Sid": "BedrockAgentMemory",
-                "Effect": "Allow",
-                "Action": [
-                    "bedrock:CreateMemory",
-                    "bedrock:GetMemory",
-                    "bedrock:UpdateMemory",
-                    "bedrock:DeleteMemory",
-                    "bedrock:ListMemories"
-                ],
-                "Resource": "*"
-            },
-            {
-                "Sid": "S3DataAccess",
-                "Effect": "Allow",
-                "Action": ["s3:GetObject", "s3:ListBucket"],
-                "Resource": [f"arn:aws:s3:::{bucket_name}", f"arn:aws:s3:::{bucket_name}/*"]
-            },
-            {
-                "Sid": "CloudWatchLogs",
-                "Effect": "Allow",
-                "Action": ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"],
-                "Resource": "arn:aws:logs:*:*:*"
-            }
-        ]
-    }
-    
-    try:
-        response = iam_client.create_role(
-            RoleName=agentcore_role_name,
-            AssumeRolePolicyDocument=json.dumps(agentcore_trust_policy),
-            Description=f"AgentCore execution role for {child['name']}",
-            MaxSessionDuration=3600
-        )
-        agentcore_role_arn = response['Role']['Arn']
-        print(f"  ✅ Created AgentCore role: {agentcore_role_arn}")
-        
-        # Wait for IAM role to propagate
-        print(f"  ⏳ Waiting for IAM role propagation (30 seconds)...")
-        import time
-        time.sleep(30)
-    except iam_client.exceptions.EntityAlreadyExistsException:
-        response = iam_client.get_role(RoleName=agentcore_role_name)
-        agentcore_role_arn = response['Role']['Arn']
-        print(f"  ℹ️  AgentCore role already exists: {agentcore_role_arn}")
-    
-    iam_client.put_role_policy(
-        RoleName=agentcore_role_name,
-        PolicyName=f"{agentcore_role_name}Policy",
-        PolicyDocument=json.dumps(agentcore_policy)
-    )
-    print(f"  ✅ Attached policies to both roles")
+    print(f"  ✅ Attached policy")
     
     # Save config
     output_config = {
@@ -343,7 +271,6 @@ def setup_child_account(config, child_id):
         "description": child['description'],
         "s3_bucket": bucket_name,
         "iam_role_arn": role_arn,
-        "agentcore_role_arn": agentcore_role_arn,
         "opensearch_collection_name": child['opensearch_collection_name']
     }
     
@@ -354,7 +281,7 @@ def setup_child_account(config, child_id):
     print("=" * 70)
     print(f"📦 S3 Bucket: {bucket_name}")
     print(f"🔐 Cross-Account Role: {role_arn}")
-    print(f"🔐 AgentCore Role: {agentcore_role_arn}")
+    print(f"💡 AgentCore will auto-create execution role during deployment")
 
 def main():
     if len(sys.argv) < 2:
