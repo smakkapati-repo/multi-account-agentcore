@@ -218,7 +218,7 @@ deploy_lob_agents() {
         fi
         
         print_step "Launching agent..."
-        AWS_PROFILE=$CORP_PROFILE agentcore launch
+        AWS_PROFILE=$CORP_PROFILE agentcore launch --auto-update-on-conflict
         CORP_AGENT_ARN=$(AWS_PROFILE=$CORP_PROFILE agentcore status 2>/dev/null | grep "bedrock-agentcore" | grep -oE "arn:aws:bedrock-agentcore:[^│]+" | head -1)
         cd ../..
         print_success "Corporate Banking Agent deployed"
@@ -241,7 +241,7 @@ deploy_lob_agents() {
         fi
         
         print_step "Launching agent..."
-        AWS_PROFILE=$RISK_PROFILE agentcore launch
+        AWS_PROFILE=$RISK_PROFILE agentcore launch --auto-update-on-conflict
         RISK_AGENT_ARN=$(AWS_PROFILE=$RISK_PROFILE agentcore status 2>/dev/null | grep "bedrock-agentcore" | grep -oE "arn:aws:bedrock-agentcore:[^│]+" | head -1)
         cd ../..
         print_success "Treasury & Risk Agent deployed"
@@ -299,7 +299,7 @@ deploy_orchestrator() {
         fi
         
         print_step "Deploying Orchestrator Agent to central account..."
-        CORPORATE_BANKING_AGENT_ARN=$CORPORATE_BANKING_AGENT_ARN TREASURY_RISK_AGENT_ARN=$TREASURY_RISK_AGENT_ARN agentcore launch
+        CORPORATE_BANKING_AGENT_ARN=$CORPORATE_BANKING_AGENT_ARN TREASURY_RISK_AGENT_ARN=$TREASURY_RISK_AGENT_ARN agentcore launch --auto-update-on-conflict
         print_success "Orchestrator Agent deployed"
         
         print_step "Deploying AgentCore Gateway..."
