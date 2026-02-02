@@ -91,6 +91,9 @@ build/
 
 # AgentCore config (contains sensitive ARNs and account info)
 backend/.bedrock_agentcore.yaml
+agents/**/.bedrock_agentcore.yaml
+agents/**/.dockerignore
+agents/**/Dockerfile
 
 # Temporary deployment files
 cfn/scripts/temp/
@@ -102,3 +105,20 @@ REGION_AUDIT.md
 TAB_STATUS_CHECK.md
 FIX_AGENT_DEPLOYMENT.md
 VALIDATION_FIXES.md
+
+# Runtime config files (generated during deployment)
+.api_gateway_url
+.cloudfront_url
+.cognito_domain
+.corp_agent_arn
+.gateway_url
+.orchestrator_agent_arn
+.risk_agent_arn
+.user_pool_client_id
+.user_pool_id
+
+# Build artifacts
+*.zip
+test-chip.html
+agents/**/config.json
+agents/**/gateway_config.json

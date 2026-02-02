@@ -36,13 +36,10 @@ const CentralizedAgentCore = () => {
     setResponse('');
 
     try {
-      const gatewayUrl = process.env.REACT_APP_GATEWAY_URL;
+      const apiUrl = 'https://irvyctyu5j.execute-api.us-east-1.amazonaws.com/prod/invoke';
       
-      if (!gatewayUrl) {
-        throw new Error('Gateway URL not configured. Set REACT_APP_GATEWAY_URL environment variable.');
-      }
-      
-      const response = await fetch(gatewayUrl, {
+      // Invoke API Gateway that calls the orchestrator agent
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -50,11 +47,21 @@ const CentralizedAgentCore = () => {
         body: JSON.stringify({ prompt: query }),
       });
 
+      console.log('API response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error('API error response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
+      console.log('API response data:', data);
+      
+      if (data.error) {
+        const errorMsg = typeof data.error === 'string' ? data.error : JSON.stringify(data.error, null, 2);
+        throw new Error(`API error: ${errorMsg}`);
+      }
       
       if (data.response) {
         const cleanText = data.response
@@ -69,10 +76,13 @@ const CentralizedAgentCore = () => {
         
         setResponse(cleanText);
       } else {
-        throw new Error(data.error || 'Unknown error');
+        console.error('Unexpected response format:', data);
+        throw new Error(`Unexpected response format: ${JSON.stringify(data)}`);
       }
     } catch (err) {
-      setError(`Error: ${err.message}`);
+      console.error('Full error:', err);
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      setError(errorMsg || 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
@@ -110,24 +120,27 @@ const CentralizedAgentCore = () => {
               💡 Sample Queries:
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {sampleQueries.map((query, index) => (
-                <Chip
-                  key={index}
-                  label={query}
-                  onClick={() => handleSubmit(query)}
-                  variant="outlined"
-                  size="small"
-                  sx={{ 
-                    cursor: 'pointer',
-                    borderColor: '#A020F0',
-                    color: '#A020F0',
-                    '&:hover': { 
-                      backgroundColor: '#A020F0',
-                      color: 'white'
-                    }
-                  }}
-                />
-              ))}
+              {sampleQueries.map((query, index) => {
+                const queryText = typeof query === 'string' ? query : JSON.stringify(query);
+                return (
+                  <Chip
+                    key={index}
+                    label={queryText}
+                    onClick={() => handleSubmit(queryText)}
+                    variant="outlined"
+                    size="small"
+                    sx={{ 
+                      cursor: 'pointer',
+                      borderColor: '#A020F0',
+                      color: '#A020F0',
+                      '&:hover': { 
+                        backgroundColor: '#A020F0',
+                        color: 'white'
+                      }
+                    }}
+                  />
+                );
+              })}
             </Box>
           </Box>
 

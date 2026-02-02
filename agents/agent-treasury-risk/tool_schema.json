@@ -1,0 +1,45 @@
+[
+  {
+    "name": "query_risk_models",
+    "description": "Query risk models (PD, LGD, Expected Loss) by bank and industry from Treasury & Risk LOB",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "bank_name": {
+          "type": "string",
+          "description": "Filter by bank (Wells Fargo, U.S. Bancorp, Charles Schwab)"
+        },
+        "industry": {
+          "type": "string",
+          "description": "Filter by industry (Healthcare, Technology, etc.)"
+        }
+      }
+    }
+  },
+  {
+    "name": "get_market_data",
+    "description": "Get current market data (Treasury yields, Fed Funds rate)",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    }
+  },
+  {
+    "name": "calculate_expected_loss",
+    "description": "Calculate expected loss for a given industry and exposure amount",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "industry": {
+          "type": "string",
+          "description": "Industry name"
+        },
+        "exposure_millions": {
+          "type": "number",
+          "description": "Loan exposure in millions"
+        }
+      },
+      "required": ["industry", "exposure_millions"]
+    }
+  }
+]

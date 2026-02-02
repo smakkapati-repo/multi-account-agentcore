@@ -1,0 +1,51 @@
+[
+  {
+    "name": "query_customer_loans",
+    "description": "Query customer relationships and loan exposure from Corporate Banking LOB",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "bank_name": {
+          "type": "string",
+          "description": "Filter by bank (JPMorgan Chase, Bank of America, Citigroup)"
+        },
+        "customer_name": {
+          "type": "string",
+          "description": "Filter by customer name"
+        },
+        "industry": {
+          "type": "string",
+          "description": "Filter by industry"
+        }
+      }
+    }
+  },
+  {
+    "name": "get_bank_aggregate_data",
+    "description": "Get aggregate loan portfolio data for a bank",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "bank_name": {
+          "type": "string",
+          "description": "Bank name (JPMorgan Chase, Bank of America, Citigroup)"
+        }
+      },
+      "required": ["bank_name"]
+    }
+  },
+  {
+    "name": "get_industry_exposure",
+    "description": "Get total loan exposure by industry across all banks",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "industry": {
+          "type": "string",
+          "description": "Industry name (Technology, Healthcare, Energy, etc.)"
+        }
+      },
+      "required": ["industry"]
+    }
+  }
+]
