@@ -102,10 +102,10 @@ const CentralizedAgentCore = () => {
         }}
       >
         <Typography variant="h4" sx={{ fontWeight: 600 }}>
-          Multi-Account Credit Risk Orchestrator
+          LoanIQ - Distributed Credit Risk Platform
         </Typography>
         <Typography variant="body2" sx={{ opacity: 0.9, mt: 1 }}>
-          Hub-and-spoke architecture: Central orchestrator queries Corporate Banking and Treasury & Risk LOBs via MCP protocol
+          3 AWS Accounts • 1 Orchestrator Agent • 2 AgentCore Gateways • 6 Tools • 13 Fortune 500 Customers
         </Typography>
       </Paper>
 
