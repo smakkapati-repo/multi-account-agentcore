@@ -7,6 +7,14 @@
 
 > **Blog Post Demo**: This repository demonstrates a multi-account architecture pattern using **Amazon Bedrock AgentCore** and **Model Context Protocol (MCP)** to enable centralized AI agents to securely access distributed data sources across AWS accounts without data duplication or ownership transfer.
 
+## 📊 By the Numbers
+
+- **3** AWS Accounts (1 Hub + 2 LOB)
+- **1** Orchestrator Agent (centralized AI reasoning)
+- **2** AgentCore Gateways (LOB data access)
+- **6** Gateway Tools (3 per LOB)
+- **13** Fortune 500 Customers (synthetic data)
+
 ## 🎯 The Enterprise Challenge
 
 Enterprise organizations face a critical architectural challenge:
@@ -210,8 +218,8 @@ On first run, the script will:
 3. ✅ Generate synthetic data automatically
 4. ✅ Create S3 buckets and IAM roles
 5. ✅ Upload data to LOB accounts
-6. ✅ Deploy LOB agents with MCP servers
-7. ✅ Deploy orchestrator with MCP client + Gateway
+6. ✅ Deploy AgentCore Gateways with Lambda targets in LOB accounts
+7. ✅ Deploy orchestrator agent in central account
 8. ✅ Build and deploy React frontend to CloudFront
 
 **Deploy Time**: ~30-40 minutes
@@ -232,17 +240,18 @@ Monthly costs for 24/7 operation:
 - **Subtotal**: ~$17-34/month
 
 **LOB Accounts (2 accounts):**
-- Bedrock (MCP Agents): $5-10 per account (pay per request)
+- AgentCore Gateway: $5-10 per account
+- Lambda (Data Access): $1-2 per account
 - S3 (Data Storage): $1-2 per account
 - IAM Roles: Free
-- **Subtotal**: ~$12-24/month (both accounts)
+- **Subtotal**: ~$14-28/month (both accounts)
 
 **Frontend (Central Account):**
 - CloudFront: $1-5
 - S3 (Static hosting): $1-2
 - **Subtotal**: ~$2-7/month
 
-**Total Estimated Cost**: ~$31-65/month
+**Total Estimated Cost**: ~$33-69/month
 
 **Cost Optimization:**
 - Bedrock uses on-demand pricing (pay per request only)
@@ -258,7 +267,9 @@ cd Centralized-Amazon-Bedrock-AgentCore-with-Distributed-MCP-Data-Sources
 ```
 
 This will delete:
-- All AgentCore agents (orchestrator + LOB agents)
+- Orchestrator agent in central account
+- AgentCore Gateways in LOB accounts
+- Lambda functions in LOB accounts
 - S3 buckets in all 3 accounts
 - IAM roles in all 3 accounts
 - CloudFront distribution and frontend
