@@ -30,8 +30,6 @@ This pattern combines **Amazon Bedrock AgentCore** with **Model Context Protocol
 
 ## 🏗️ Architecture Overview
 
-![Multi-Account Architecture](arch/bankiq_plus_agentcore_architecture.png)
-
 **Detailed Architecture:** See [ARCHITECTURE.md](ARCHITECTURE.md) for comprehensive technical documentation.
 
 ```
